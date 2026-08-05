@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1c1917;
+  --brand: #f97316;
+  --brand-dark: #ea580c;
+  --brand-light: #fff7ed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Oculta la barra de scroll manteniendo el desplazamiento (rueda, táctil, teclado). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Respeta a quien prefiere menos animación (accesibilidad). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* El único momento animado de la página de planes: al cambiar de mensual a anual,
+   el precio entra en vez de aparecer de golpe. Lo desactiva el bloque de
+   prefers-reduced-motion de arriba, como todo lo demás. */
+@keyframes precio-entra {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@utility animate-precio {
+  animation: precio-entra 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Los controles nativos de fecha y número rompían el sistema visual en seco: el
+   selector gris del navegador y las flechitas de incremento no se parecen a nada
+   más de la interfaz. Se quedan funcionando igual, pero con nuestro lenguaje. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 6px;
+  opacity: 0.45;
+  transition: opacity 150ms, background-color 150ms;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: var(--brand-light);
+}
+/* Un campo de fecha vacío enseña "dd/mm/aaaa" tan oscuro como un valor de verdad.
+   Los subcampos sin rellenar no tienen aria-valuenow, así que se pueden atenuar
+   para que lean como marcador de posición, igual que el resto de placeholders. */
+input[type="date"]::-webkit-datetime-edit-day-field:not([aria-valuenow]),
+input[type="date"]::-webkit-datetime-edit-month-field:not([aria-valuenow]),
+input[type="date"]::-webkit-datetime-edit-year-field:not([aria-valuenow]) {
+  color: #a8a29e;
+}
+
+/* Quita el padding/relleno por defecto del InfoWindow de Google Maps para que
+   nuestras tarjetas (con su propia foto a sangre) controlen todo el espacio. */
+.gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 1rem !important;
+}
+.gm-style-iw-d {
+  padding: 0 !important;
+  overflow: hidden !important;
+}

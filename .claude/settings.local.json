@@ -1,0 +1,125 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "PowerShell($h=$env:USERPROFILE; try { $c = Get-Content \"$h\\\\.claude.json\" -Raw | ConvertFrom-Json } catch { \"PARSE ERROR .claude.json: $_\"; exit }; \"--- top-level keys ---\"; \\($c.PSObject.Properties.Name\\) -join \", \"; \"installMethod=\" + $c.installMethod; \"autoUpdates=\" + $c.autoUpdates; \"numStartups=\" + $c.numStartups; \"--- mcpServers \\(user scope\\) ---\"; if \\($c.mcpServers\\) { \\($c.mcpServers.PSObject.Properties.Name\\) -join \", \" } else { \"none\" }; \"--- skillUsage ---\"; if \\($c.skillUsage\\) { $c.skillUsage.PSObject.Properties | ForEach-Object { \"$\\($_.Name\\) count=$\\($_.Value.usageCount\\) last=$\\($_.Value.lastUsedAt\\)\" } } else { \"none\" }; \"--- pluginUsage ---\"; if \\($c.pluginUsage\\) { $c.pluginUsage.PSObject.Properties | ForEach-Object { \"$\\($_.Name\\) count=$\\($_.Value.usageCount\\) last=$\\($_.Value.lastUsedAt\\)\" } } else { \"none\" })",
+      "PowerShell($h=$env:USERPROFILE; $c = Get-Content \"$h\\\\.claude.json\" -Raw | ConvertFrom-Json; \"--- project entries ---\"; $c.projects.PSObject.Properties | ForEach-Object { $n=$_.Name; $v=$_.Value; \"PROJECT: $n\"; \"  mcpServers: \" + \\(if\\($v.mcpServers\\){\\($v.mcpServers.PSObject.Properties.Name\\) -join \",\"}else{\"none\"}\\); \"  disabledMcpServers: \" + \\(\\($v.disabledMcpServers\\) -join \",\"\\); \"  enabledPlugins: \" + \\(if\\($v.enabledPlugins\\){\\($v.enabledPlugins.PSObject.Properties.Name\\) -join \",\"}else{\"none\"}\\) })",
+      "PowerShell($h=$env:USERPROFILE; $c = Get-Content \"$h\\\\.claude.json\" -Raw | ConvertFrom-Json; foreach \\($p in $c.projects.PSObject.Properties\\) { $v=$p.Value; \"PROJECT: $\\($p.Name\\)\"; $m = \"none\"; if \\($v.mcpServers\\) { $m = \\($v.mcpServers.PSObject.Properties.Name\\) -join \",\" }; \"  mcpServers: $m\"; \"  disabledMcpServers: \" + \\(\\($v.disabledMcpServers\\) -join \",\"\\); $e = \"none\"; if \\($v.enabledPlugins\\) { $e = \\($v.enabledPlugins.PSObject.Properties.Name\\) -join \",\" }; \"  enabledPlugins: $e\"; \"  hasTrustDialogAccepted: \" + $v.hasTrustDialogAccepted })",
+      "PowerShell(Get-ChildItem -Path src,supabase -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\',''\\) } | Sort-Object)",
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 40)",
+      "PowerShell(npm run *)",
+      "PowerShell(Get-ChildItem \"node_modules\\\\next\\\\dist\\\\docs\" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\node_modules\\\\next\\\\dist\\\\docs\\\\',''\\) } | Sort-Object)",
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -First 30)",
+      "PowerShell($ports = @\\(3000,3001,3002\\); foreach \\($p in $ports\\) { $r = Test-NetConnection -ComputerName localhost -Port $p -InformationLevel Quiet -WarningAction SilentlyContinue; \"$p : $r\" })",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(Get-Content .env.local | ForEach-Object { \\($_ -split '='\\)[0] }; \"---\"; try { \\(Get-Command supabase -ErrorAction Stop\\).Source } catch { \"supabase CLI: no\" }; try { \\(Get-Command psql -ErrorAction Stop\\).Source } catch { \"psql: no\" })",
+      "PowerShell(\\(Get-Content .env.local | Select-String '^NEXT_PUBLIC_SUPABASE_URL='\\) -replace 'NEXT_PUBLIC_SUPABASE_URL=','')",
+      "PowerShell(Get-Content .env.local | Select-String '^TRAVELPAYOUT' | ForEach-Object { $p = $_ -split '=',2; \"$\\($p[0]\\) => longitud del valor: $\\($p[1].Trim\\(\\).Length\\)\" })",
+      "WebFetch(domain:support.travelpayouts.com)",
+      "WebFetch(domain:travelpayouts.github.io)",
+      "WebFetch(domain:travelpayouts-data-api.readthedocs.io)",
+      "PowerShell(try { $r = Invoke-RestMethod -Uri \"https://api.travelpayouts.com/data/airlines.json\" -Method Get -TimeoutSec 30; \"total: $\\($r.Count\\)\"; $r | Where-Object { $_.code -eq 'UX' } | ConvertTo-Json -Depth 2 } catch { \"ERROR: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(Rename-Item *)",
+      "PowerShell($h = @{ \"X-Access-Token\" = \"a37c9277bb3d31363f2b9af665e8298f\" }; try { $r = Invoke-RestMethod -Uri \"https://api.travelpayouts.com/v1/prices/cheap?origin=AGP&destination=MAD&currency=eur\" -Headers $h -TimeoutSec 30; $r | ConvertTo-Json -Depth 5 } catch { \"ERROR: $\\($_.Exception.Message\\)\" })",
+      "PowerShell($h = @{ \"X-Access-Token\" = \"a37c9277bb3d31363f2b9af665e8298f\" }; try { $r = Invoke-RestMethod -Uri \"https://api.travelpayouts.com/v1/prices/cheap?origin=MAD&destination=OPO&currency=eur&depart_date=2026-09-10&return_date=2026-09-13\" -Headers $h -TimeoutSec 30; $r | ConvertTo-Json -Depth 5 } catch { \"ERROR: $\\($_.Exception.Message\\)\" })",
+      "PowerShell($h = @{ \"X-Access-Token\" = \"a37c9277bb3d31363f2b9af665e8298f\" }; foreach \\($q in @\\(\"origin=MAD&destination=OPO&currency=eur\",\"origin=MAD&destination=OPO&currency=eur&depart_date=2026-09\",\"origin=AGP&destination=MAD&currency=eur&depart_date=2026-09-26&return_date=2026-09-27\"\\)\\) { $r = Invoke-RestMethod -Uri \"https://api.travelpayouts.com/v1/prices/cheap?$q\" -Headers $h -TimeoutSec 30; $n = 0; foreach \\($d in $r.data.PSObject.Properties\\) { $n += $d.Value.PSObject.Properties.Count }; \"$q => $n resultados\" })",
+      "PowerShell($h = @{ \"X-Access-Token\" = \"a37c9277bb3d31363f2b9af665e8298f\" }; try { $r = Invoke-RestMethod -Uri \"https://api.travelpayouts.com/v1/prices/calendar?origin=MAD&destination=OPO&depart_date=2026-09&calendar_type=departure_date&currency=eur\" -Headers $h -TimeoutSec 30; \"success: $\\($r.success\\)\"; \"n: $\\($r.data.PSObject.Properties.Count\\)\"; $r.data.PSObject.Properties | Select-Object -First 3 | ForEach-Object { \"$\\($_.Name\\):\"; $_.Value | ConvertTo-Json -Depth 3 } } catch { \"ERROR: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(Get-Process *)",
+      "PowerShell(foreach \\($t in @\\(\"Oporto\",\"Porto\",\"Sevilla\",\"Granada\"\\)\\) { $r = Invoke-RestMethod -Uri \"https://autocomplete.travelpayouts.com/places2?term=$t&locale=es&types%5B%5D=city\" -Method Get; \"--- $t\"; $r | Select-Object -First 3 | ForEach-Object { \"  $\\($_.code\\) | $\\($_.name\\) | $\\($_.country_name\\) | weight=$\\($_.weight\\)\" } })",
+      "PowerShell(foreach \\($u in @\\(\"https://tiqets.tpx.gr/uRXiulsV\",\"https://klook.tpx.gr/J7r2E2AC\"\\)\\) { try { $r = Invoke-WebRequest -Uri $u -MaximumRedirection 0 -ErrorAction SilentlyContinue } catch { $r = $_.Exception.Response }; \"--- $u\"; if \\($r.Headers.Location\\) { \"$\\($r.Headers.Location\\)\" } else { \"status: $\\($r.StatusCode\\)\" } })",
+      "PowerShell(foreach \\($u in @\\(\"https://tiqets.tpx.gr/uRXiulsV\",\"https://klook.tpx.gr/J7r2E2AC\"\\)\\) { \"=== $u\"; try { $resp = Invoke-WebRequest -Uri $u -MaximumRedirection 5 -UserAgent \"Mozilla/5.0\" -TimeoutSec 30; \"final: $\\($resp.BaseResponse.ResponseUri\\)\"; } catch { \"ERR: $\\($_.Exception.Message\\)\" } })",
+      "PowerShell(foreach \\($u in @\\(\"https://tiqets.tpx.gr/uRXiulsV\",\"https://klook.tpx.gr/J7r2E2AC\"\\)\\) { \"=== $u\"; $actual = $u; for \\($i=0; $i -lt 4; $i++\\) { try { $r = Invoke-WebRequest -Uri $actual -MaximumRedirection 0 -UseBasicParsing -UserAgent \"Mozilla/5.0\" -TimeoutSec 30 -ErrorAction Stop; \"  [$\\($r.StatusCode\\)] sin redireccion\"; break } catch { $resp = $_.Exception.Response; if \\($resp -and $resp.Headers -and $resp.Headers['Location']\\) { $loc = $resp.Headers['Location']; \"  -> $loc\"; $actual = $loc } else { \"  fin: $\\($_.Exception.Message\\)\"; break } } } })",
+      "PowerShell($h = New-Object System.Net.Http.HttpClientHandler; $h.AllowAutoRedirect = $false; $c = New-Object System.Net.Http.HttpClient\\($h\\); $c.Timeout = [TimeSpan]::FromSeconds\\(30\\); foreach \\($u in @\\(\"https://tiqets.tpx.gr/uRXiulsV\",\"https://klook.tpx.gr/J7r2E2AC\"\\)\\) { \"=== $u\"; $actual = $u; for \\($i=0; $i -lt 5; $i++\\) { $res = $c.GetAsync\\($actual\\).Result; $code = [int]$res.StatusCode; $loc = $null; if \\($res.Headers.Location\\) { $loc = $res.Headers.Location.ToString\\(\\) }; \"  [$code] $loc\"; if \\(-not $loc\\) { break }; $actual = $loc } })",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\resolver.mjs\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\probar-links.mjs\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\variantes.mjs\")",
+      "PowerShell(node -e \"const q=encodeURIComponent\\('Torre de los Clerigos Porto'\\);const t='partner=travelpayouts.com&tq_campaign=b12bc3b8fb6243aa862662298-739561&tq_click_id=b12bc3b8fb6243aa862662298-739561';const url='https://www.tiqets.com/es/search?q='+q+'&'+t;fetch\\(url,{redirect:'follow',headers:{'User-Agent':'Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/126.0 Safari/537.36'}}\\).then\\(r=>console.log\\('HTTP '+r.status+'\\\\n'+r.url\\)\\).catch\\(e=>console.log\\('ERR '+e.message\\)\\)\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\resolver2.mjs\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\buscadores.mjs\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\final.mjs\")",
+      "PowerShell(node -e \"const UA='Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/126.0 Safari/537.36';const t='sub_id=a4d1b8e0fa2c41db8b37d296d-739561&utm_source=travelpayouts';const casos={'q=Porto sin tracking':'https://wegotrip.com/search/?q=Porto','q=Porto con tracking':'https://wegotrip.com/search/?q=Porto&'+t,'query larga sin tracking':'https://wegotrip.com/search/?q='+encodeURIComponent\\('Visita guiada centro historico Oporto'\\),'q=Oporto':'https://wegotrip.com/search/?q=Oporto'};\\(async\\(\\)=>{for\\(const [k,u] of Object.entries\\(casos\\)\\){try{const r=await fetch\\(u,{headers:{'User-Agent':UA}}\\);console.log\\(`[${r.status}] ${k}`\\)}catch\\(e\\){console.log\\('[ERR] '+k+' '+e.message\\)}}}\\)\\(\\)\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\wegotrip.mjs\")",
+      "PowerShell(node -e \"const t='sub_id=a4d1b8e0fa2c41db8b37d296d-739561&utm_source=travelpayouts';const UA='Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/126.0 Safari/537.36';const url='https://wegotrip.com/search/?q='+encodeURIComponent\\('Oporto'\\)+'&'+t;fetch\\(url,{headers:{'User-Agent':UA}}\\).then\\(r=>console.log\\('WeGoTrip por ciudad: HTTP '+r.status+'\\\\n'+r.url\\)\\).catch\\(e=>console.log\\('ERR '+e.message\\)\\)\")",
+      "PowerShell(node \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\wegotrip2.mjs\")",
+      "PowerShell($dest = \"C:\\\\Users\\\\Yeseong\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Yeseong-Desktop-Traveler-IA\\\\96e22954-8bab-4c96-8618-d5ea27ac2034\\\\scratchpad\\\\one-skill\"; if \\(Test-Path $dest\\) { Remove-Item $dest -Recurse -Force }; git clone --depth 1 https://github.com/rebelytics/one-skill-to-rule-them-all.git $dest; if \\($?\\) { Get-ChildItem $dest -Recurse -File | Select-Object -First 40 | ForEach-Object { $_.FullName.Replace\\($dest,''\\) } })",
+      "WebFetch(domain:github.com)",
+      "PowerShell(Expand-Archive *)",
+      "PowerShell(npx --yes impeccable@latest install --help 2>&1 | Select-Object -First 40)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Yeseong\\\\Desktop\\\\Traveler IA\\\\.claude\" -Recurse | Select-Object -First 30 | ForEach-Object { $_.FullName.Replace\\(\"C:\\\\Users\\\\Yeseong\\\\Desktop\\\\Traveler IA\\\\.claude\\\\\",\"\"\\) })",
+      "PowerShell(Get-Content *)",
+      "PowerShell(\"--- GLOBAL \\(~/.claude\\):\"; Get-ChildItem \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\skills\" -Directory | Select-Object Name; if \\(Test-Path \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\settings.json\"\\) { \"--- settings.json global tiene hooks?: \" + \\(\\(Get-Content \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\settings.json\" -Raw\\) -match '\"hooks\"'\\) }; \"--- PROYECTO:\"; Get-ChildItem \"C:\\\\Users\\\\Yeseong\\\\Desktop\\\\Traveler IA\\\\.claude\\\\skills\" -Directory -ErrorAction SilentlyContinue | Select-Object Name)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(winget install *)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect-csp.mjs\")",
+      "Bash(npm run *)",
+      "Bash(python -c ' *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json src/app/page.tsx src/components/landing/app-preview.tsx src/components/formatted-text.tsx src/components/trip-map.tsx src/components/carousel.tsx \"src/app/\\(app\\)/viaje/[id]/layout.tsx\" \"src/app/\\(app\\)/viaje/[id]/chat/chat-view.tsx\" \"src/app/\\(app\\)/mis-viajes/page.tsx\" \"src/app/\\(app\\)/mis-viajes/crear-viaje-dialog.tsx\" src/app/globals.css)",
+      "Bash(sed -n '/function linkPrograma/,/^}/p' src/lib/affiliates/links.ts)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 8 http://localhost:3000/)",
+      "Bash(powershell -NoProfile -Command \"Get-Process -Id 27520 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty ProcessName\")",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json src/components/carousel.tsx src/components/trip-map.tsx src/components/guardados-provider.tsx \"src/app/\\(app\\)/viaje/[id]/favoritos/favoritos-view.tsx\" src/components/flight-card.tsx)",
+      "Bash(rm -rf xls)",
+      "Bash(mkdir -p xls/tiqets xls/klook)",
+      "Bash(unzip -o -q \"/c/Users/Yeseong/Downloads/Tiqets exclusive offers.xlsx\" -d xls/tiqets)",
+      "Bash(unzip -o -q \"/c/Users/Yeseong/Downloads/[Ext.] Klook_ EA_SA List \\(wef 1 May 2026\\).xlsx\" -d xls/klook)",
+      "Bash(cp \"C:/Users/Yeseong/AppData/Local/Temp/claude/C--Users-Yeseong-Desktop-Traveler-IA/e4707e27-ee3a-4b6c-8805-179949d479b7/scratchpad/tiqets-catalogo.json\" src/lib/affiliates/tiqets-catalogo.json)",
+      "Bash(node -e \"const c=require\\('./src/lib/affiliates/tiqets-catalogo.json'\\);console.log\\('JSON en repo:',c.productos.length,'productos,',c.ciudades.length,'ciudades'\\)\")",
+      "WebFetch(domain:www.tiqets.com)",
+      "Bash(node -e ' *)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json src/lib/affiliates/links.ts src/lib/affiliates/tiqets-catalogo.ts)",
+      "Bash(cp \"C:/Users/Yeseong/AppData/Local/Temp/claude/C--Users-Yeseong-Desktop-Traveler-IA/e4707e27-ee3a-4b6c-8805-179949d479b7/scratchpad/tq/catalogo-tiqets.json\" src/lib/affiliates/tiqets-catalogo.json)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json src/components/carousel.tsx src/components/recommendation-card.tsx src/lib/affiliates/tiqets-catalogo.ts src/lib/affiliates/links.ts)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json src/app/premium/pricing-toggle.tsx src/app/premium/page.tsx src/components/user-menu.tsx)",
+      "Bash(curl -s --max-time 25 http://localhost:3000/premium)",
+      "Bash(curl -s --max-time 25 http://localhost:3000/premium -o /tmp/prem.html)",
+      "Bash(rm -f /tmp/prem.html)",
+      "Bash(curl -s --max-time 25 http://localhost:3000/premium -o prem.html)",
+      "Bash(rm -f prem.html)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} en %{time_total}s\\\\n\" --max-time 30 http://localhost:3000/premium)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json src/app/premium/pricing-toggle.tsx src/app/premium/page.tsx src/app/globals.css)",
+      "Bash(node \"C:/Users/Yeseong/AppData/Local/Temp/claude/C--Users-Yeseong-Desktop-Traveler-IA/e4707e27-ee3a-4b6c-8805-179949d479b7/scratchpad/roma.mjs\")",
+      "WebFetch(domain:hotellook.com)",
+      "Bash(python \"C:/Users/Yeseong/AppData/Local/Temp/claude/C--Users-Yeseong-Desktop-Traveler-IA/e4707e27-ee3a-4b6c-8805-179949d479b7/scratchpad/fix_tipos.py\")",
+      "Bash(node \"C:/Users/Yeseong/AppData/Local/Temp/claude/C--Users-Yeseong-Desktop-Traveler-IA/e4707e27-ee3a-4b6c-8805-179949d479b7/scratchpad/limpia.mjs\")",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json \"src/app/\\(app\\)/viaje/[id]/vuelos/page.tsx\" src/lib/affiliates/links.ts src/lib/chat/responder.ts)",
+      "WebFetch(domain:radicalstorage.com)",
+      "Bash(node \"C:/Users/Yeseong/.claude/skills/impeccable/scripts/detect.mjs\" --json \"src/app/\\(app\\)/viaje/[id]/vuelos/page.tsx\" src/lib/affiliates/links.ts)",
+      "Bash(curl -s -i --max-time 25 \"https://radicalstorage.tpx.gr/neWz3x6Z\")",
+      "Bash(powershell -NoProfile -Command 'Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '\\\\''*node*'\\\\'' } | Select-Object -First 5 Id,ProcessName')",
+      "Bash(curl -s -o /dev/null -w \"dev server: HTTP %{http_code}\\\\n\" --max-time 10 http://localhost:3000/)",
+      "Bash(npx --yes vercel env ls)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\skills\\\\impeccable\\\\scripts\\\\hook.mjs\" ] || node \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\skills\\\\impeccable\\\\scripts\\\\hook.mjs\"",
+            "timeout": 5,
+            "statusMessage": "Checking UI changes"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\skills\\\\impeccable\\\\scripts\\\\hook.mjs\" ] || node \"C:\\\\Users\\\\Yeseong\\\\.claude\\\\skills\\\\impeccable\\\\scripts\\\\hook.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Design deep pass"
+          }
+        ]
+      }
+    ]
+  },
+  "description": "Impeccable design detector: immediate-tier checks after Edit/Write/MultiEdit on UI files, full-rule deep pass on Stop."
+}
