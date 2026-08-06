@@ -89,19 +89,79 @@ de contraseña de esa cuenta hasta llegar a la pantalla de contraseña nueva.
 
 ---
 
-## 4. SMTP propio
+## 4. SMTP propio ← **bloquea dos cosas a la vez**
 
-El servicio de email que trae Supabase de serie tiene un límite de **unos pocos envíos por
-hora** en todo el proyecto. Ya está afectando al reset de contraseña en producción: cuando
-se agota, el correo simplemente no sale.
+El servicio de email que trae Supabase de serie está limitado a **2 correos por hora en
+todo el proyecto** (dato de su propia documentación, no una estimación). No es un límite
+generoso que se agota de vez en cuando: son dos. Está pensado para probar, no para
+producción.
 
-- [ ] Contratar un SMTP (Resend, Postmark, Brevo…) y verificar el dominio
-- [ ] Supabase → *Authentication → Emails → SMTP Settings* → meter host, puerto, usuario,
-      contraseña y remitente `@traveleria.app`
-- [ ] Traducir al español las plantillas de *Confirm signup* y *Reset password*
+Y además, con el servicio integrado Supabase **no deja editar las plantillas de correo**:
+sale el aviso *"Set up custom SMTP to edit templates"*. Las plantillas de marca ya están
+escritas y commiteadas en `supabase/emails/`, pero no se pueden aplicar hasta tener SMTP.
+
+Así que este paso desbloquea tres cosas de golpe: el límite de envíos, el remitente
+`@traveleria.app` y las plantillas.
+
+**Proveedor elegido: Resend** — es la única opción de email del marketplace de Vercel
+(`vercel integration discover --category messaging`).
+
+**Alta directa en resend.com, no por el marketplace.** La ventaja de instalarlo desde Vercel
+es que inyecta la API key en las variables de entorno del proyecto, pero aquí no sirve de
+nada: quien manda los correos es **Supabase**, no nuestro código, así que la clave tiene que
+acabar en el panel de Supabase. Además hay que entrar a Resend igualmente para verificar el
+dominio y crear la key. (`vercel integration add` tampoco acepta `--yes`: es interactivo y
+pide elegir plan.)
+
+- [ ] Cuenta en resend.com (plan gratuito: 3.000 correos/mes)
+- [ ] Resend → *Domains → Add Domain* → `traveleria.app` → copiar los registros DNS (SPF,
+      DKIM y, si lo ofrece, DMARC)
+- [ ] Pegarlos en **Porkbun**, que es donde está el dominio, y darle a *Verify*
+
+**Trampa de Porkbun:** añade el dominio solo al nombre del registro. Si Resend pide el host
+`resend._domainkey`, hay que escribir exactamente eso, **no**
+`resend._domainkey.traveleria.app`: quedaría duplicado y no verificaría nunca.
+
+**TTL:** Resend pone "Auto" y Porkbun solo acepta números. Da igual: el TTL es cuánto se
+cachea el registro y **no interviene en la verificación**. Poner `600` en todos. Conviene
+tenerlo bajo mientras se configura, para que una corrección se propague en diez minutos y no
+al día siguiente.
+- [ ] Crear una API key en Resend
+### Correo de contacto y respuestas
+
+El correo del proyecto es **`contacto.traveleria@gmail.com`**, pero **no se puede usar como
+remitente**: Resend solo envía desde dominios verificados, y Gmail marcaría como suplantación
+un `@gmail.com` enviado desde otro sitio.
+
+Montaje elegido:
+
+- **Remitente:** `contacto@traveleria.app` (mismo criterio que el nombre del Gmail)
+- **Respuestas:** reenvío en Porkbun de `contacto@traveleria.app` →
+  `contacto.traveleria@gmail.com`
+
+- [ ] Resend → apagar **Enable Receiving** y borrar el MX `@` de Porkbun si se llegó a añadir
+- [ ] Porkbun → *Email Forwarding* → `contacto@traveleria.app` a
+      `contacto.traveleria@gmail.com`
+- [ ] Comprobarlo: enviar un correo desde otra cuenta a `contacto@traveleria.app` y ver si
+      llega al Gmail
+
+**No hay conflicto con Resend:** sus registros verificados viven en `send` y
+`resend._domainkey`, que son subdominios. El MX del reenvío va en `@`, que queda libre justo
+porque se apaga *Enable Receiving*. Ese es el motivo real de apagarlo, no quitar el aviso
+amarillo.
+
+- [ ] Supabase → *Authentication → Emails → SMTP Settings*:
+  - Host: `smtp.resend.com`
+  - Puerto: `465` (SSL) o `587` (STARTTLS)
+  - Usuario: `resend` (literalmente esa palabra, no tu email)
+  - Contraseña: la API key de Resend
+  - Sender email: `contacto@traveleria.app` · Sender name: `Traveler IA`
+- [ ] Subir el límite en *Authentication → Rate Limits*: al activar SMTP propio, Supabase
+      deja por defecto **30 correos por hora**, que también se queda corto
+- [ ] Ya con SMTP activo, pegar las plantillas de `supabase/emails/` (ver su README)
 
 **Comprobación:** pedir tres resets seguidos desde tres cuentas distintas y que lleguen los
-tres.
+tres, con el remitente `@traveleria.app` y el diseño de marca.
 
 ---
 

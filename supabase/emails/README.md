@@ -3,6 +3,34 @@
 Plantillas de los correos que manda Supabase. **No se despliegan solas**: hay que pegarlas
 a mano en el panel, igual que las migraciones.
 
+> **Antes hace falta SMTP propio.** Con el servicio de email integrado, Supabase bloquea la
+> edición de plantillas: sale *"Set up custom SMTP to edit templates"*. Es el paso 4 de
+> `DEPLOY.md`. Hasta entonces estos ficheros no se pueden aplicar.
+
+> **Estas plantillas dependen de `/auth/confirm`.** Hay que desplegar esa ruta ANTES de
+> pegarlas, o los enlaces darán 404.
+
+## Por qué los enlaces NO usan `{{ .ConfirmationURL }}`
+
+Es la variable que Supabase pone por defecto, y con ella el enlace pasa por el endpoint
+`/auth/v1/verify` de Supabase, que acaba en nuestro `/auth/callback` con un `code`. Ese
+código se canjea con `exchangeCodeForSession`, que es **PKCE**: necesita una cookie *code
+verifier* que solo existe en **el mismo navegador** que pidió el correo.
+
+Para el login con Google va bien, porque ida y vuelta ocurren en la misma pestaña. Para los
+correos **no**: la gente pide el reset en el móvil y abre el enlace en la app de Gmail, que
+es otro contexto. Sin la cookie, el canje falla y el usuario acaba en `/login` sin entender
+nada. En un producto que se usa sobre todo desde el móvil, eso no es un caso raro: es el
+caso normal.
+
+Por eso los enlaces apuntan a `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&…`,
+que resuelve `src/app/auth/confirm/route.ts` con `verifyOtp`. No necesita cookie previa, así
+que funciona en cualquier navegador y en cualquier dispositivo. Es lo que documenta Supabase
+para apps que renderizan en servidor.
+
+`/auth/callback` se queda como está: lo sigue usando el login con Google, donde el flujo
+PKCE es el correcto.
+
 Supabase → *Authentication* → *Emails* → *Templates* → pestaña correspondiente → pegar el
 HTML entero en el cuadro *Message body* → **Save**.
 
