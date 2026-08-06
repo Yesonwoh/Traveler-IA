@@ -144,12 +144,18 @@ export function ChatView({
     /* El alto lo fija el layout del viaje (app shell). Aquí solo se reparte: el chat
        ocupa lo que sobra y el mapa es una columna fija, ambos a sangre en escritorio. */
     <div className="flex h-full min-h-0 flex-col lg:flex-row">
-      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col bg-white lg:border-r lg:border-stone-200">
+      {/* Sin borde derecho en escritorio: la costura con el mapa ya la hace su esquina
+          redondeada y su sombra, y dos separadores seguidos ensucian. */}
+      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col bg-white">
         <div
           ref={scrollRef}
           onScroll={onScrollMensajes}
           className={cn(
-            "no-scrollbar mx-auto w-full min-w-0 max-w-3xl flex-1 space-y-5 overflow-y-auto p-4 sm:px-6",
+            // En escritorio la conversación se pega a la izquierda en vez de ir centrada:
+            // centrada dejaba hueco muerto a los dos lados de la columna, y ese hueco es
+            // precisamente lo que ahora se lleva el mapa. La medida de lectura no cambia,
+            // la sigue fijando max-w-3xl.
+            "no-scrollbar mx-auto w-full min-w-0 max-w-3xl flex-1 space-y-5 overflow-y-auto p-4 sm:px-6 lg:mx-0 lg:pl-8 xl:pl-12",
             puntos.length > 0 && "pb-12 lg:pb-4"
           )}
         >
@@ -221,9 +227,11 @@ export function ChatView({
 
         <form
           onSubmit={onSubmit}
-          className="shrink-0 border-t border-stone-200 bg-white px-4 py-3 sm:px-6"
+          className="shrink-0 border-t border-stone-200 bg-white px-4 py-3 sm:px-6 lg:pl-8 xl:pl-12"
         >
-          <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
+          {/* mismo tratamiento que los mensajes, o el campo de escribir se desalinearía
+              con la conversación que tiene encima */}
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-2 lg:mx-0">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -242,7 +250,11 @@ export function ChatView({
         </form>
       </div>
 
-      <div className="hidden shrink-0 lg:block lg:h-full lg:w-[420px] xl:w-[560px] 2xl:w-[680px]">
+      {/* El mapa se redondea solo por la izquierda, que es el lado que da al chat: por
+          la derecha toca el borde de la ventana, y ahí una esquina redonda solo enseñaría
+          fondo. La sombra hacia la izquierda lo separa del chat sin necesidad de un borde,
+          y de paso no se pierde ni un píxel de mapa. */}
+      <div className="hidden shrink-0 overflow-hidden rounded-l-3xl shadow-[-10px_0_28px_rgba(28,25,23,0.07)] lg:block lg:h-full lg:w-[460px] xl:w-[640px] 2xl:w-[820px]">
         <TripMap puntos={puntos} renderContent={renderPuntoMapaEscritorio} />
       </div>
 
