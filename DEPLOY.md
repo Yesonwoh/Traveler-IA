@@ -17,20 +17,22 @@ Estado a 6 de agosto de 2026. Marca cada casilla según la vayas cerrando.
 
 ---
 
-## 1. Redesplegar (bloquea a todo lo demás)
+## 1. Redesplegar con el dominio bueno — hecho
 
-Las variables `NEXT_PUBLIC_*` **se incrustan al compilar**, no se leen en caliente. El
-despliegue que está sirviendo ahora se construyó *antes* de que existiera
-`NEXT_PUBLIC_SITE_URL`, así que la web sigue anunciando el dominio viejo.
+- [x] `NEXT_PUBLIC_SITE_URL` recreada sin BOM y desplegada
 
-- [ ] Redesplegar producción (`vercel --prod`, o push a `main`)
+Las variables `NEXT_PUBLIC_*` **se incrustan al compilar**, no se leen en caliente: añadir
+una no basta nunca, hay que reconstruir.
 
-**Comprobación:** `https://traveleria.app/robots.txt` debe decir
-`Sitemap: https://traveleria.app/sitemap.xml`. Si sigue diciendo `traveler-ia.vercel.app`,
-el valor de la variable en Vercel está mal escrito.
+El primer intento se cayó con `Invalid URL` porque el valor guardado llevaba un **BOM**
+(U+FEFF) invisible delante — PowerShell escribe UTF-8 con BOM por defecto. Si vuelves a
+cargar variables desde un fichero generado en PowerShell, usa
+`Out-File -Encoding utf8NoBOM` o pásalas por `printf`. El código ahora sanea el valor
+(`src/lib/site-url.ts`), así que un BOM ya no tumba el build, pero la variable limpia
+sigue siendo lo correcto.
 
-**Si te lo saltas:** Google indexa el dominio de Vercel en vez del tuyo, y al compartir un
-enlace en WhatsApp o Instagram aparece la URL de Vercel.
+**Verificado el 6 de agosto:** `robots.txt`, `sitemap.xml` y `og:url` anuncian
+`traveleria.app`.
 
 ---
 
