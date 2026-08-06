@@ -66,30 +66,58 @@ hace nada.
 
 ---
 
-## 3. URLs de Supabase ← **empieza por aquí**
+## 3. URLs de Supabase — ahora solo afecta al login con Google
 
 Supabase → *Authentication → URL Configuration*
 
 - [ ] **Site URL**: `https://traveleria.app`
-- [ ] **Redirect URLs**, las cuatro:
+- [ ] **Redirect URLs**:
   - `https://traveleria.app/auth/callback`
-  - `https://traveleria.app/auth/callback?next=*`
   - `http://localhost:3000/auth/callback`
-  - `http://localhost:3000/auth/callback?next=*`
 
-La variante con `?next=*` **no es opcional**: el reset de contraseña vuelve con esa query
-(`src/lib/auth-redirects.ts`) y, sin ella en la lista, Supabase descarta el redirect **sin
-dar error visible**. El usuario ve una página en blanco y no hay nada en los logs.
+**Ojo, esto cambió el 6 de agosto de 2026.** Antes hacía falta añadir también las variantes
+`…/auth/callback?next=*`, porque el reset de contraseña volvía con esa query. Ya no: desde
+que los correos usan `/auth/confirm` con `token_hash`, **el enlace del correo va directo a
+nuestro dominio y no pasa por la validación de redirects de Supabase**. Si las variantes con
+`?next=*` siguen ahí, no molestan, pero ya no hacen nada.
 
-**Si te lo saltas:** el login con Google y el reset de contraseña redirigen a `localhost` y
-fallan para todo el mundo menos para ti.
+Quien sí depende de esta lista es el **login con Google**, que sigue usando
+`/auth/callback` con el flujo PKCE (y hace bien: ida y vuelta ocurren en la misma pestaña).
 
-**Comprobación:** registrarse con Google desde el móvil, con otra cuenta, y pedir un reset
-de contraseña de esa cuenta hasta llegar a la pantalla de contraseña nueva.
+**Si te lo saltas:** el login con Google redirige a `localhost` y falla para todo el mundo
+menos para ti.
+
+**Comprobación:** registrarse con Google desde el móvil, con otra cuenta. Ya **no** sirve
+probar el reset de contraseña: ese flujo dejó de pasar por aquí.
+
+**Site URL sí sigue importando para los correos**, porque las plantillas construyen el
+enlace con `{{ .SiteURL }}`. Si apuntara a `localhost`, los correos llevarían enlaces a
+localhost. Que el reset funcione en producción demuestra que está bien puesta.
 
 ---
 
-## 4. SMTP propio ← **bloquea dos cosas a la vez**
+## 4. SMTP propio — hecho el 6 de agosto de 2026
+
+Resend enviando desde `contacto@traveleria.app`, dominio verificado, plantillas de marca
+aplicadas y reset de contraseña probado **en cruzado** (pedido en el ordenador, abierto en
+el móvil), que es el caso que fallaba.
+
+**Dos trampas que costaron tiempo y conviene no repetir:**
+
+1. **Supabase no siempre guarda la plantilla.** Se pega el HTML, se le da a *Save*, parece
+   que ha ido, y sigue sirviendo la anterior. Se comprueba abriendo el correo recibido y
+   mirando la URL gris del final: si empieza por `https://traveleria.app/auth/confirm` está
+   bien; si empieza por `https://…supabase.co/auth/v1/verify` es la vieja. Después de
+   guardar, salir de la pantalla y volver a entrar para confirmar que se quedó.
+2. **Los correos viejos de la bandeja llevan el enlace viejo para siempre.** Al probar un
+   cambio de plantilla hay que pedir un reset NUEVO y borrar los anteriores, o se pica con
+   el equivocado y parece que el arreglo no funciona.
+
+El mensaje de la pantalla de login dice cuál de los dos casos es: *"No se pudo iniciar
+sesión"* viene de `/auth/callback` (enlace viejo) y *"El enlace no es válido o ha caducado"*
+de `/auth/confirm` (enlace nuevo). Merece la pena mirarlo antes de tocar nada.
+
+### Contexto (por qué se hizo así)
 
 El servicio de email que trae Supabase de serie está limitado a **2 correos por hora en
 todo el proyecto** (dato de su propia documentación, no una estimación). No es un límite
@@ -113,10 +141,10 @@ acabar en el panel de Supabase. Además hay que entrar a Resend igualmente para 
 dominio y crear la key. (`vercel integration add` tampoco acepta `--yes`: es interactivo y
 pide elegir plan.)
 
-- [ ] Cuenta en resend.com (plan gratuito: 3.000 correos/mes)
-- [ ] Resend → *Domains → Add Domain* → `traveleria.app` → copiar los registros DNS (SPF,
+- [x] Cuenta en resend.com (plan gratuito: 3.000 correos/mes)
+- [x] Resend → *Domains → Add Domain* → `traveleria.app` → copiar los registros DNS (SPF,
       DKIM y, si lo ofrece, DMARC)
-- [ ] Pegarlos en **Porkbun**, que es donde está el dominio, y darle a *Verify*
+- [x] Pegarlos en **Porkbun**, que es donde está el dominio, y darle a *Verify*
 
 **Trampa de Porkbun:** añade el dominio solo al nombre del registro. Si Resend pide el host
 `resend._domainkey`, hay que escribir exactamente eso, **no**
@@ -126,7 +154,7 @@ pide elegir plan.)
 cachea el registro y **no interviene en la verificación**. Poner `600` en todos. Conviene
 tenerlo bajo mientras se configura, para que una corrección se propague en diez minutos y no
 al día siguiente.
-- [ ] Crear una API key en Resend
+- [x] Crear una API key en Resend
 ### Correo de contacto y respuestas
 
 El correo del proyecto es **`contacto.traveleria@gmail.com`**, pero **no se puede usar como
@@ -139,10 +167,10 @@ Montaje elegido:
 - **Respuestas:** reenvío en Porkbun de `contacto@traveleria.app` →
   `contacto.traveleria@gmail.com`
 
-- [ ] Resend → apagar **Enable Receiving** y borrar el MX `@` de Porkbun si se llegó a añadir
-- [ ] Porkbun → *Email Forwarding* → `contacto@traveleria.app` a
+- [x] Resend → apagar **Enable Receiving** y borrar el MX `@` de Porkbun si se llegó a añadir
+- [x] Porkbun → *Email Forwarding* → `contacto@traveleria.app` a
       `contacto.traveleria@gmail.com`
-- [ ] Comprobarlo: enviar un correo desde otra cuenta a `contacto@traveleria.app` y ver si
+- [x] Comprobarlo: enviar un correo desde otra cuenta a `contacto@traveleria.app` y ver si
       llega al Gmail
 
 **No hay conflicto con Resend:** sus registros verificados viven en `send` y
@@ -150,15 +178,15 @@ Montaje elegido:
 porque se apaga *Enable Receiving*. Ese es el motivo real de apagarlo, no quitar el aviso
 amarillo.
 
-- [ ] Supabase → *Authentication → Emails → SMTP Settings*:
+- [x] Supabase → *Authentication → Emails → SMTP Settings*:
   - Host: `smtp.resend.com`
   - Puerto: `465` (SSL) o `587` (STARTTLS)
   - Usuario: `resend` (literalmente esa palabra, no tu email)
   - Contraseña: la API key de Resend
   - Sender email: `contacto@traveleria.app` · Sender name: `Traveler IA`
-- [ ] Subir el límite en *Authentication → Rate Limits*: al activar SMTP propio, Supabase
+- [x] Subir el límite en *Authentication → Rate Limits*: al activar SMTP propio, Supabase
       deja por defecto **30 correos por hora**, que también se queda corto
-- [ ] Ya con SMTP activo, pegar las plantillas de `supabase/emails/` (ver su README)
+- [x] Ya con SMTP activo, pegar las plantillas de `supabase/emails/` (ver su README)
 
 **Comprobación:** pedir tres resets seguidos desde tres cuentas distintas y que lleguen los
 tres, con el remitente `@traveleria.app` y el diseño de marca.
