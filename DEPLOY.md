@@ -193,31 +193,70 @@ tres, con el remitente `@traveleria.app` y el diseño de marca.
 
 ---
 
-## 5. Confirmación de email — solo DESPUÉS del SMTP
+## 5. Confirmación de email — decidido NO activarla todavía
 
-Hoy está **desactivada** (`mailer_autoconfirm: true`): quien se registra entra directo. El
-código soporta las dos configuraciones, así que activarla es un interruptor.
+Sigue **desactivada** (`mailer_autoconfirm: true`): quien se registra entra directo. El
+código soporta las dos configuraciones, así que es un interruptor y se puede activar el día
+que toque.
 
-- [ ] Supabase → *Authentication → Sign In / Providers → Email* → **Confirm email** ✅
+**Decisión del 6 de agosto de 2026: se deja apagada a propósito.** El bloqueo técnico
+(el límite de 2 correos/hora) ya no existe, pero el motivo de producto sí: con poquísimos
+usuarios, meter un correo entre el registro y el primer viaje es un paso más donde perder
+gente, y el cuello de botella confirmado es la adquisición (ver `PRODUCT.md`). Hoy cuesta
+más de lo que protege.
 
-**No lo actives antes del paso 4.** Con el límite de envíos del SMTP integrado, un registro
-cuyo correo no sale deja la cuenta inservible y sin ningún error a la vista. El cuello de
-botella del producto es la adquisición (ver `PRODUCT.md`): romper el registro es lo peor
-que se puede hacer ahora mismo.
+**Qué se pierde mientras esté apagada:** quien se equivoque al teclear su correo se queda
+sin forma de recuperar la contraseña, y sin forma de que le contactemos. Con este volumen es
+asumible.
+
+**Cuándo reconsiderarlo:** cuando haya volumen real, registros basura, o cuando el correo
+pase a ser un canal de retención y no solo de recuperación de contraseña.
+
+- [ ] *(cuando toque)* Supabase → *Authentication → Sign In / Providers → Email* →
+      **Confirm email** ✅ — la plantilla `confirm-signup.html` ya está puesta y esperando
 
 ---
 
-## 6. Restringir la clave de Google Maps
+## 6. Restringir la clave de Google Maps — hacen falta DOS claves
 
-`NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` **se ve en el navegador**: cualquiera puede sacarla del
-código fuente. Sin restringir, te pueden gastar la cuota.
+`NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` **se ve en el navegador**: cualquiera la saca del código
+fuente. Sin restringir, te gastan la cuota.
 
-- [ ] Google Cloud → *Credentials* → tu clave
-- [ ] **Application restrictions → HTTP referrers**
-- [ ] Añadir `https://traveleria.app/*`, `https://www.traveleria.app/*` y
-      `http://localhost:3000/*`
+> ⚠️ **Restringir esa clave por HTTP referrer y quedarse ahí ROMPE el producto.** La misma
+> clave se usa desde dos sitios incompatibles: el mapa del navegador (`trip-map.tsx`, que sí
+> manda `Referer`) y el servidor (`geocode.ts` y `places-photo.ts`, llamados por
+> `lib/chat/responder.ts`, que **no manda referrer**). Con la restricción puesta, Google
+> responde `REQUEST_DENIED` a las llamadas del servidor y las recomendaciones se quedan
+> **sin coordenadas y sin foto, en silencio**. El chat parece funcionar y el mapa sale vacío.
 
-**Comprobación:** el mapa del chat sigue cargando en producción y en local.
+Por eso el código ya está preparado (`src/lib/google/claves.ts`) para usar dos claves. Orden:
+
+- [ ] Google Cloud → *Credentials* → **crear una clave nueva** para el servidor
+  - *Application restrictions*: **None** (las funciones de Vercel no tienen IP fija)
+  - *API restrictions*: **Geocoding API** y **Places API**, nada más
+- [ ] Vercel → variable de entorno **`GOOGLE_SERVER_API_KEY`** con esa clave, en Production
+      (y en Preview si quieres que allí también funcione). **Sin** prefijo `NEXT_PUBLIC_`:
+      así Next no la incrusta en el bundle del navegador
+- [ ] **Redesplegar**
+- [ ] Comprobar que el chat sigue poniendo pines y fotos **antes** de tocar la clave vieja
+- [ ] Ya entonces, restringir `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY`:
+  - *Application restrictions*: **HTTP referrers** → `https://traveleria.app/*`,
+    `https://www.traveleria.app/*`, `http://localhost:3000/*`
+  - *API restrictions*: **Maps JavaScript API** y **Places API** (la de fotos)
+
+Mientras `GOOGLE_SERVER_API_KEY` no exista, el código cae a la pública y funciona como
+siempre: se puede desplegar sin coordinar nada con Google.
+
+**Por qué la clave pública sigue haciendo falta en el servidor:** las URLs de foto de Places
+se guardan en `recomendaciones.fotos_urls` con la clave dentro, y las pide luego el navegador
+con un `<img>`. Esas llevan la **pública** a propósito — meter ahí la de servidor sería
+publicarla en cada tarjeta.
+
+**Deuda conocida:** esas URLs guardadas llevan la clave incrustada. Si algún día rotas la
+clave pública, las fotos ya guardadas dejarán de cargar y habrá que regenerarlas.
+
+**Comprobación:** crear un viaje nuevo y ver que las tarjetas salen con foto y con pin en el
+mapa, en producción. Que el mapa cargue no basta: eso solo prueba la clave del navegador.
 
 ---
 

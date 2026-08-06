@@ -1,15 +1,18 @@
+import { claveGoogleServidor } from "./claves";
+
 export type Coordenadas = { lat: number; lng: number; countryCode: string | null } | null;
 
 /**
  * Geocodifica una dirección de texto (la que devuelve la IA) a lat/lng + país.
  * El país se usa luego para elegir proveedor de afiliado (Klook en Asia, Tiqets/GetYourGuide fuera).
- * Reusa la key de Google Places. Si esa key tiene restricción por HTTP referrer
- * en Google Cloud Console, crea una key server-side sin esa restricción para esto.
+ *
+ * Esto corre en el servidor, así que usa la clave de servidor: una clave restringida por
+ * HTTP referrer fallaría aquí y las recomendaciones se quedarían sin pin en el mapa.
  */
 export async function geocodeDireccion(direccion: string): Promise<Coordenadas> {
   if (!direccion?.trim()) return null;
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+  const apiKey = claveGoogleServidor();
   if (!apiKey) return null;
 
   const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");

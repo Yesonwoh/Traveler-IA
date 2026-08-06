@@ -1,7 +1,13 @@
 import { buscarFotoUnsplash } from "@/lib/unsplash";
+import { claveGooglePublica, claveGoogleServidor } from "./claves";
 
 const MAX_FOTOS = 3;
 
+/**
+ * Esta URL se guarda en `recomendaciones.fotos_urls` y acaba en un `<img src>` del
+ * navegador, que sí manda referrer. Por eso lleva la clave PÚBLICA y no la de servidor:
+ * meter aquí la de servidor sería publicarla en cada tarjeta.
+ */
 function construirUrlFoto(photoReference: string, apiKey: string): string {
   const photoUrl = new URL("https://maps.googleapis.com/maps/api/place/photo");
   photoUrl.searchParams.set("maxwidth", "480");
@@ -16,7 +22,10 @@ function construirUrlFoto(photoReference: string, apiKey: string): string {
  * hacemos una segunda llamada a Place Details (que sí devuelve la galería completa, hasta 10 fotos).
  */
 export async function buscarFotosLugar(nombre: string, direccion?: string | null): Promise<string[]> {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+  // Las dos búsquedas las hace el servidor (sin referrer); la URL de la foto la pedirá
+  // luego el navegador (con referrer). Cada una con la clave que le corresponde.
+  const apiKey = claveGoogleServidor();
+  const claveFotos = claveGooglePublica();
   const query = [nombre, direccion].filter(Boolean).join(" ");
   if (!query.trim()) return [];
 
@@ -44,8 +53,10 @@ export async function buscarFotosLugar(nombre: string, direccion?: string | null
         if (photosDetalladas && photosDetalladas.length > 0) photos = photosDetalladas;
       }
 
-      if (photos && photos.length > 0) {
-        return photos.slice(0, MAX_FOTOS).map((photo) => construirUrlFoto(photo.photo_reference, apiKey));
+      if (photos && photos.length > 0 && claveFotos) {
+        return photos
+          .slice(0, MAX_FOTOS)
+          .map((photo) => construirUrlFoto(photo.photo_reference, claveFotos));
       }
     } catch {
       // sigue al fallback de Unsplash
