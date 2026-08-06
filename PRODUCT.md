@@ -74,7 +74,8 @@ parte de la diferenciación: es higiene, no argumento.
 - Dos motores con alcance deliberadamente distinto:
   - **Free** (`gpt-5.4-nano`, temperatura 0.6): voz de colega, planes por franjas del día,
     rangos de precio y 3-5 sitios por respuesta. Menciona Premium solo si el usuario pide
-    algo propio de Premium, una vez por conversación como mucho.
+    algo propio de Premium, una vez por conversación como mucho; y si aún tiene la prueba
+    de 3 días sin estrenar, la nombra en esa misma frase y en ninguna otra.
   - **Premium** (`gpt-5.4`, temperatura 0.4): itinerario hora por hora, presupuesto
     desglosado con total, ruta optimizada con tiempos entre paradas, plan B más barato
     sobre la partida más cara, logística fina (días de cierre, colas), control del
@@ -87,7 +88,11 @@ parte de la diferenciación: es higiene, no argumento.
 - Favoritos y reservas por viaje, agrupadas por tipo con su estado.
 - Buscador de vuelos con precios y rutas reales (Aviasales / Travelpayouts).
 - Cuentas Supabase (email + Google), reset de contraseña, avatar, configuración de perfil.
-- Premium por Stripe: 4,99 €/mes o 39 €/año (webhook propio en `/api/webhooks/stripe`).
+- Premium por Stripe: 4,99 €/mes o 39 €/año (webhook propio en `/api/webhooks/stripe`), con
+  **prueba gratuita de 3 días** al contratar por primera vez, en los dos planes. Se pide
+  tarjeta y se cobra sola al cuarto día si no se cancela. Es **una por persona**: la
+  elegibilidad se comprueba contra el perfil y contra Stripe antes de crear el checkout, y
+  ninguna superficie —ni la IA— la ofrece a quien ya la gastó.
 - Páginas legales (términos, privacidad, cookies), banner de cookies, sitemap y robots.
 
 **Restricciones técnicas y de producto:**

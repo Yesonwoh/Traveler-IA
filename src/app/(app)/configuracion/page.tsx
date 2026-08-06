@@ -2,6 +2,12 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { leerPerfil } from "@/lib/supabase/perfil";
+import {
+  DIAS_PRUEBA,
+  diasRestantesDePrueba,
+  fechaLarga,
+  leerEstadoPrueba,
+} from "@/lib/suscripcion/prueba";
 import { AvatarUpload } from "./avatar-upload";
 import { PerfilForm } from "./perfil-form";
 import { PreferenciasForm } from "./preferencias-form";
@@ -41,6 +47,11 @@ export default async function ConfiguracionPage() {
 
   const isPremium = profile?.subscription_status === "premium";
   const inicial = (profile?.nombre || user!.email || "?").charAt(0).toUpperCase();
+
+  // Aquí basta con la marca del perfil: quien decide de verdad si hay prueba es el
+  // checkout (que además pregunta a Stripe). Esta tarjeta solo informa.
+  const { usada, finaliza } = await leerEstadoPrueba(supabase, user!.id);
+  const diasDePrueba = isPremium ? diasRestantesDePrueba(finaliza) : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -85,6 +96,10 @@ export default async function ConfiguracionPage() {
         <SuscripcionCard
           isPremium={isPremium}
           renuevaEl={profile?.subscription_current_period_end ?? null}
+          diasDePrueba={diasDePrueba}
+          finPrueba={diasDePrueba && finaliza ? fechaLarga(finaliza) : null}
+          pruebaSinUsar={!usada}
+          diasPrueba={DIAS_PRUEBA}
         />
       </section>
 

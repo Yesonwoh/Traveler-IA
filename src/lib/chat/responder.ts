@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { hayNombreEn } from "@/lib/supabase/columnas";
 import { generarRespuestaIA, extraerCiudad, type HistorialMensaje } from "@/lib/ai/travelerAI";
+import { pruebaGratisPrompt } from "@/lib/ai/prompts";
+import { DIAS_PRUEBA, hayColumnasPrueba } from "@/lib/suscripcion/prueba";
 import { geocodeDireccion } from "@/lib/google/geocode";
 import { buscarFotoUnsplash } from "@/lib/unsplash";
 import { buscarFotosLugar } from "@/lib/google/places-photo";
@@ -14,6 +16,7 @@ export const PERFIL_COLUMNS =
 
 type PerfilRow = {
   subscription_status?: string | null;
+  trial_used?: boolean | null;
   contador_mensajes?: number | null;
   ubicacion?: string | null;
   fecha_nacimiento?: string | null;
@@ -80,13 +83,21 @@ export async function procesarMensajeIA({
   });
   if (insertUserError) throw new Error("No se pudo guardar el mensaje.");
 
+  // `trial_used` solo se pide si la migración 0011 está aplicada: pedirla antes haría
+  // fallar la consulta entera y el chat se quedaría sin contexto de perfil.
+  const conColumnasPrueba = await hayColumnasPrueba(supabase);
   const profile = await leerPerfil<PerfilRow>(
     supabase,
     userId,
-    PERFIL_COLUMNS,
+    conColumnasPrueba ? `${PERFIL_COLUMNS}, trial_used` : PERFIL_COLUMNS,
     "subscription_status, contador_mensajes, ubicacion, fecha_nacimiento"
   );
   const tier = profile?.subscription_status === "premium" ? "premium" : "free";
+
+  // Sin la migración aplicada no hay forma de saber si ya la gastó, así que la IA se
+  // calla: mejor no ofrecerla que ofrecérsela dos veces a la misma persona.
+  const puedeProbarGratis =
+    tier === "free" && conColumnasPrueba && profile?.trial_used !== true;
 
   const { data: historialRows } = await supabase
     .from("mensajes")
@@ -106,6 +117,7 @@ export async function procesarMensajeIA({
     historial,
     mensaje: texto,
     contextoUsuario: contextoDesdePerfil(profile),
+    promocion: puedeProbarGratis ? pruebaGratisPrompt(DIAS_PRUEBA) : null,
     instrucciones,
   });
 

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { stripe, PRICE_IDS } from "@/lib/stripe/client";
+import { DIAS_PRUEBA } from "@/lib/suscripcion/prueba";
+import { tienePruebaDisponible } from "@/lib/suscripcion/elegibilidad";
 
 async function getOrCreateStripeCustomer(
   userId: string,
@@ -38,11 +40,21 @@ export async function crearCheckoutSession(plan: "monthly" | "yearly") {
 
   const origin = (await headers()).get("origin");
   const customerId = await getOrCreateStripeCustomer(user.id, user.email);
+  const conPrueba = await tienePruebaDisponible(supabase, user.id, customerId);
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
+    ...(conPrueba && {
+      subscription_data: {
+        trial_period_days: DIAS_PRUEBA,
+        // Checkout pide tarjeta igualmente en modo suscripción, pero si por lo que
+        // sea la prueba llegase al final sin método de pago, que se cancele: una
+        // suscripción impagada dando acceso Premium es peor que perder al usuario.
+        trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+      },
+    }),
     success_url: `${origin}/mis-viajes?premium=1`,
     cancel_url: `${origin}/premium`,
   });

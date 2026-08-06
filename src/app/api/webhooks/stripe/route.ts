@@ -52,13 +52,37 @@ async function actualizarSuscripcionPorCustomer(
   const activa = subscription.status === "active" || subscription.status === "trialing";
   const periodEnd = subscription.items.data[0]?.current_period_end;
 
-  await supabase
-    .from("profiles")
-    .update({
-      subscription_status: activa ? "premium" : "free",
-      subscription_current_period_end: periodEnd
-        ? new Date(periodEnd * 1000).toISOString()
+  const base = {
+    subscription_status: activa ? "premium" : "free",
+    subscription_current_period_end: periodEnd
+      ? new Date(periodEnd * 1000).toISOString()
+      : null,
+  };
+
+  // `trial_used` solo sube a true, nunca vuelve atrás: es lo que impide encadenar
+  // pruebas gratis cancelando y volviendo a contratar. `subscription_trial_end` en
+  // cambio se limpia en cuanto la prueba termina, porque solo describe la actual.
+  const conPrueba = {
+    ...base,
+    subscription_trial_end:
+      subscription.status === "trialing" && subscription.trial_end
+        ? new Date(subscription.trial_end * 1000).toISOString()
         : null,
-    })
+    ...(subscription.trial_end ? { trial_used: true } : {}),
+  };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(conPrueba)
     .eq("stripe_customer_id", subscription.customer as string);
+
+  // Si la migración 0011 todavía no está aplicada, la consulta falla entera por las
+  // columnas nuevas. Se reintenta con lo de siempre para no perder el alta de la
+  // suscripción, que es lo que de verdad no puede fallar aquí.
+  if (error) {
+    await supabase
+      .from("profiles")
+      .update(base)
+      .eq("stripe_customer_id", subscription.customer as string);
+  }
 }

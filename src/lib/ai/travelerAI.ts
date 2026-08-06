@@ -51,6 +51,8 @@ export async function generarRespuestaIA(params: {
   contextoUsuario?: string | null;
   /** Instrucciones extra solo para este turno (p. ej. el briefing de creación del viaje). */
   instrucciones?: string | null;
+  /** Nota comercial de este turno (p. ej. que tiene la prueba gratuita sin estrenar). */
+  promocion?: string | null;
 }): Promise<RespuestaIA> {
   const isPremium = params.tier === "premium";
   const model = isPremium ? PREMIUM_MODEL : FREE_MODEL;
@@ -62,6 +64,9 @@ export async function generarRespuestaIA(params: {
   ];
   if (params.contextoUsuario) {
     messages.push({ role: "system", content: params.contextoUsuario });
+  }
+  if (params.promocion) {
+    messages.push({ role: "system", content: params.promocion });
   }
   if (params.instrucciones) {
     messages.push({ role: "system", content: params.instrucciones });

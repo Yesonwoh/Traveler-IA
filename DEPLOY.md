@@ -66,21 +66,60 @@ hace nada.
 
 ---
 
-## 3. URLs de Supabase
+## 3. URLs de Supabase ← **empieza por aquí**
 
-- [ ] Supabase → *Authentication → URL Configuration*
+Supabase → *Authentication → URL Configuration*
+
 - [ ] **Site URL**: `https://traveleria.app`
-- [ ] **Redirect URLs**: añadir `https://traveleria.app/auth/callback`
-      (y conservar `http://localhost:3000/auth/callback` para seguir trabajando en local)
+- [ ] **Redirect URLs**, las cuatro:
+  - `https://traveleria.app/auth/callback`
+  - `https://traveleria.app/auth/callback?next=*`
+  - `http://localhost:3000/auth/callback`
+  - `http://localhost:3000/auth/callback?next=*`
+
+La variante con `?next=*` **no es opcional**: el reset de contraseña vuelve con esa query
+(`src/lib/auth-redirects.ts`) y, sin ella en la lista, Supabase descarta el redirect **sin
+dar error visible**. El usuario ve una página en blanco y no hay nada en los logs.
 
 **Si te lo saltas:** el login con Google y el reset de contraseña redirigen a `localhost` y
 fallan para todo el mundo menos para ti.
 
-**Comprobación:** registrarse con Google desde el móvil, con otra cuenta.
+**Comprobación:** registrarse con Google desde el móvil, con otra cuenta, y pedir un reset
+de contraseña de esa cuenta hasta llegar a la pantalla de contraseña nueva.
 
 ---
 
-## 4. Restringir la clave de Google Maps
+## 4. SMTP propio
+
+El servicio de email que trae Supabase de serie tiene un límite de **unos pocos envíos por
+hora** en todo el proyecto. Ya está afectando al reset de contraseña en producción: cuando
+se agota, el correo simplemente no sale.
+
+- [ ] Contratar un SMTP (Resend, Postmark, Brevo…) y verificar el dominio
+- [ ] Supabase → *Authentication → Emails → SMTP Settings* → meter host, puerto, usuario,
+      contraseña y remitente `@traveleria.app`
+- [ ] Traducir al español las plantillas de *Confirm signup* y *Reset password*
+
+**Comprobación:** pedir tres resets seguidos desde tres cuentas distintas y que lleguen los
+tres.
+
+---
+
+## 5. Confirmación de email — solo DESPUÉS del SMTP
+
+Hoy está **desactivada** (`mailer_autoconfirm: true`): quien se registra entra directo. El
+código soporta las dos configuraciones, así que activarla es un interruptor.
+
+- [ ] Supabase → *Authentication → Sign In / Providers → Email* → **Confirm email** ✅
+
+**No lo actives antes del paso 4.** Con el límite de envíos del SMTP integrado, un registro
+cuyo correo no sale deja la cuenta inservible y sin ningún error a la vista. El cuello de
+botella del producto es la adquisición (ver `PRODUCT.md`): romper el registro es lo peor
+que se puede hacer ahora mismo.
+
+---
+
+## 6. Restringir la clave de Google Maps
 
 `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` **se ve en el navegador**: cualquiera puede sacarla del
 código fuente. Sin restringir, te pueden gastar la cuota.
@@ -94,7 +133,7 @@ código fuente. Sin restringir, te pueden gastar la cuota.
 
 ---
 
-## 5. Un solo dominio canónico (SEO)
+## 7. Un solo dominio canónico (SEO)
 
 Hoy `traveleria.app`, `www.traveleria.app` y `traveler-ia.vercel.app` sirven **la misma
 página con HTTP 200**. Para Google eso es contenido duplicado.
@@ -107,7 +146,7 @@ El dominio `.vercel.app` no se puede quitar, pero con `metadataBase` apuntando a
 
 ---
 
-## 6. Repaso final en producción
+## 8. Repaso final en producción
 
 - [ ] La portada carga y "Empezar viaje" lleva a registro
 - [ ] Registro con email y con Google
@@ -115,13 +154,31 @@ El dominio `.vercel.app` no se puede quitar, pero con `metadataBase` apuntando a
 - [ ] El mapa carga con sus pines
 - [ ] "Entradas" en un monumento lleva a la ficha de Tiqets con tu tracking
 - [ ] La pestaña Vuelos busca precios y aparece "Al aterrizar"
-- [ ] "Hazte Premium" abre el pago de Stripe
-- [ ] Tras pagar, el usuario aparece como Premium
+- [ ] "Empezar gratis" abre el pago de Stripe y el resumen dice "3 días de prueba"
+- [ ] Tras terminar el checkout, el usuario aparece como Premium y `/premium` dice
+      "Quedan 3 días"
+- [ ] Con una cuenta que ya haya tenido suscripción, `/premium` **no** ofrece la prueba
 
 ---
 
 ## Base de datos
 
 Las migraciones `0009_evitar_duplicados.sql` y `0010_nombre_en_recomendaciones.sql` ya están
-aplicadas. Cualquier migración nueva hay que correrla a mano contra Supabase antes de
-desplegar el código que la necesita.
+aplicadas.
+
+### Pendiente: `0011_prueba_gratis.sql` (prueba de 3 días)
+
+- [ ] Supabase → *SQL Editor* → pegar y ejecutar
+      `supabase/migrations/0011_prueba_gratis.sql`
+- [ ] Redesplegar (o reiniciar el servidor) para que el código detecte las columnas nuevas
+
+Este orden **no es crítico**: el código está escrito para funcionar antes y después. Sin la
+migración, la prueba se sigue concediendo (quien decide es Stripe) y el webhook reintenta el
+guardado sin las columnas nuevas; lo único que no pasa es que la IA la mencione en el chat,
+porque sin `trial_used` no hay forma de saber quién ya la gastó y prefiere callarse antes
+que ofrecérsela dos veces a la misma persona.
+
+La detección de columnas se cachea **una vez por proceso** (igual que `hayNombreEn`): tras
+aplicar la migración hace falta un arranque nuevo del servidor, no basta con recargar.
+
+Cualquier migración futura, igual: a mano contra Supabase.

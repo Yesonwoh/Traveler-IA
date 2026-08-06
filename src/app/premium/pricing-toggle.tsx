@@ -15,16 +15,43 @@ const PRECIO = {
   yearly: { importe: "39€", periodo: "/año", pie: "Te ahorras 20,88€ frente al mensual" },
 } as const;
 
+const TITULAR_TARJETA = "mt-3 text-4xl font-black tracking-tight text-white";
+
+/**
+ * Entre 640 y 660 px la rejilla ya son dos columnas pero el contenedor aún no ha
+ * llegado a su ancho máximo, y a la tarjeta le quedan 238 px útiles. Medido con la
+ * tipografía real: "3 días gratis" ocupa 215 px a 36 px y entra; "Quedan 3 días"
+ * se va a 248 px y se sale. Solo ese baja de tamaño, y solo en esa franja.
+ */
+const TITULAR_LARGO = "sm:text-[1.8rem] md:text-4xl";
+
 export function PricingToggle({
   isPremium = false,
   renuevaEl = null,
+  puedeProbar = false,
+  diasPrueba,
+  diasDePrueba = null,
+  finPrueba = null,
+  primerCobro = null,
 }: {
   isPremium?: boolean;
   /** Fin del periodo actual, para decirle al usuario hasta cuándo tiene Premium. */
   renuevaEl?: string | null;
+  /** Le corresponde la prueba gratuita. Ya verificado contra Stripe en el servidor. */
+  puedeProbar?: boolean;
+  /** Duración de la prueba (DIAS_PRUEBA), para no repetir el número en el copy. */
+  diasPrueba: number;
+  /** Días que le quedan de prueba en curso, si está dentro de una. */
+  diasDePrueba?: number | null;
+  /** Día en que se acaba la prueba en curso, ya formateado ("9 de agosto"). */
+  finPrueba?: string | null;
+  /** Día del primer cobro si empezara la prueba hoy, ya formateado. */
+  primerCobro?: string | null;
 }) {
   const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
   const [isPending, startTransition] = useTransition();
+
+  const enPrueba = isPremium && diasDePrueba !== null;
 
   return (
     <div>
@@ -79,7 +106,15 @@ export function PricingToggle({
           />
 
           <div className="relative">
-            <Etiqueta tono="oscuro">{isPremium ? "Tu plan actual" : "Recomendado"}</Etiqueta>
+            <Etiqueta tono="oscuro">
+              {enPrueba
+                ? "Prueba en curso"
+                : isPremium
+                  ? "Tu plan actual"
+                  : puedeProbar
+                    ? `${diasPrueba} días gratis`
+                    : "Recomendado"}
+            </Etiqueta>
 
             <p className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-brand">
               <Zap size={14} strokeWidth={2.5} /> Premium
@@ -87,11 +122,32 @@ export function PricingToggle({
 
             {isPremium ? (
               <>
-                <p className="mt-3 text-4xl font-black tracking-tight text-white">Activo</p>
+                <p className={cn(TITULAR_TARJETA, enPrueba && TITULAR_LARGO)}>
+                  {enPrueba
+                    ? diasDePrueba === 1
+                      ? "Queda 1 día"
+                      : `Quedan ${diasDePrueba} días`
+                    : "Activo"}
+                </p>
                 <p className="mt-1 text-sm text-stone-400">
-                  {renuevaEl
-                    ? `Se renueva el ${new Date(renuevaEl).toLocaleDateString("es-ES")}`
-                    : "Suscripción en marcha"}
+                  {enPrueba && finPrueba
+                    ? `El ${finPrueba} empieza el cobro`
+                    : renuevaEl
+                      ? `Se renueva el ${new Date(renuevaEl).toLocaleDateString("es-ES")}`
+                      : "Suscripción en marcha"}
+                </p>
+              </>
+            ) : puedeProbar ? (
+              <>
+                {/* Con prueba, el número que manda son los días gratis: el precio pasa a
+                    ser la letra pequeña honesta, no el titular. */}
+                <p className={TITULAR_TARJETA}>{diasPrueba} días gratis</p>
+                {/* El precio pasa a segundo plano, pero no a letra pequeña: quien va a
+                    dar su tarjeta tiene que ver qué se le va a cobrar sin buscarlo. */}
+                <p key={plan} className="animate-precio mt-1 text-base text-stone-300">
+                  Luego {PRECIO[plan].importe}
+                  {PRECIO[plan].periodo}
+                  {plan === "yearly" && " · te ahorras 20,88€"}
                 </p>
               </>
             ) : (
@@ -127,27 +183,40 @@ export function PricingToggle({
                   type="submit"
                   className="h-12 w-full cursor-pointer rounded-xl border border-white/25 text-sm font-semibold text-white transition-colors hover:border-white/50 hover:bg-white/10"
                 >
-                  Cancelar suscripción
+                  {enPrueba ? "Cancelar la prueba" : "Cancelar suscripción"}
                 </button>
                 <p className="mt-2.5 text-center text-xs leading-relaxed text-stone-400">
-                  Se abre el portal seguro de Stripe, donde también puedes cambiar de plan o de
-                  método de pago.
+                  {enPrueba && finPrueba
+                    ? `Se abre el portal seguro de Stripe. Si cancelas antes del ${finPrueba}, no se te cobra nada.`
+                    : "Se abre el portal seguro de Stripe, donde también puedes cambiar de plan o de método de pago."}
                 </p>
               </form>
             ) : (
-              <Button
-                onClick={() => startTransition(() => crearCheckoutSession(plan))}
-                disabled={isPending}
-                className="mt-8 h-12 w-full text-base shadow-lg shadow-brand/25"
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 size={17} className="animate-spin" /> Redirigiendo...
-                  </>
-                ) : (
-                  "Hazte Premium"
+              <>
+                <Button
+                  onClick={() => startTransition(() => crearCheckoutSession(plan))}
+                  disabled={isPending}
+                  className="mt-8 h-12 w-full text-base shadow-lg shadow-brand/25"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 size={17} className="animate-spin" /> Redirigiendo...
+                    </>
+                  ) : puedeProbar ? (
+                    // los días ya los dicen la etiqueta, el titular y la nota de abajo:
+                    // el botón solo tiene que nombrar la acción y caber en una línea
+                    "Empezar gratis"
+                  ) : (
+                    "Hazte Premium"
+                  )}
+                </Button>
+                {puedeProbar && primerCobro && (
+                  <p className="mt-2.5 text-center text-xs leading-relaxed text-stone-400">
+                    Se pide tarjeta para activarla, pero no se cobra nada hasta el{" "}
+                    {primerCobro}.
+                  </p>
                 )}
-              </Button>
+              </>
             )}
           </div>
         </div>
@@ -155,8 +224,10 @@ export function PricingToggle({
 
       {!isPremium && (
         <div className="mt-9 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm text-stone-500">
-          <Garantia>Cancelas cuando quieras</Garantia>
-          <Garantia>Sin permanencia</Garantia>
+          <Garantia>
+            {puedeProbar && primerCobro ? `No pagas nada hasta el ${primerCobro}` : "Cancelas cuando quieras"}
+          </Garantia>
+          <Garantia>{puedeProbar ? "Cancelas cuando quieras" : "Sin permanencia"}</Garantia>
           <Garantia>Pago seguro con Stripe</Garantia>
         </div>
       )}
@@ -192,7 +263,9 @@ function Etiqueta({ tono, children }: { tono: "claro" | "oscuro"; children: Reac
     <span
       className={cn(
         "mb-4 inline-block rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em]",
-        tono === "oscuro" ? "bg-brand text-white" : "bg-stone-100 text-stone-500"
+        // texto casi negro sobre el naranja: en blanco se quedaba en 2,8:1 y esta
+        // etiqueta es ahora la que anuncia la prueba, o sea lo que hay que poder leer
+        tono === "oscuro" ? "bg-brand text-stone-950" : "bg-stone-100 text-stone-500"
       )}
     >
       {children}

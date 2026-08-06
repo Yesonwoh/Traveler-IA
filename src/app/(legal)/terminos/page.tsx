@@ -66,6 +66,14 @@ export default function TerminosPage() {
       </p>
       <ul>
         <li>
+          <strong>Prueba gratuita.</strong> Si nunca has tenido una suscripción, Premium empieza
+          con <strong>3 días gratuitos</strong>. Se pide una tarjeta para activarla, pero no se
+          cobra nada durante esos días. Al terminar, la suscripción continúa automáticamente y se
+          cobra el importe del plan elegido, salvo que la canceles antes. Si cancelas dentro de
+          los 3 días, no se te cobra nada. La prueba es de <strong>una por persona</strong>: no se
+          repite al volver a suscribirse.
+        </li>
+        <li>
           La suscripción se renueva automáticamente por periodos equivalentes hasta que la canceles.
         </li>
         <li>
