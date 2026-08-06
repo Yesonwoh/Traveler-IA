@@ -145,8 +145,13 @@ export function ChatView({
        ocupa lo que sobra y el mapa es una columna fija, ambos a sangre en escritorio. */
     <div className="flex h-full min-h-0 flex-col lg:flex-row">
       {/* Sin borde derecho en escritorio: la costura con el mapa ya la hace su esquina
-          redondeada y su sombra, y dos separadores seguidos ensucian. */}
-      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col bg-white">
+          redondeada y su sombra, y dos separadores seguidos ensucian.
+
+          El tope de ancho a partir de 2xl es lo que cierra el hueco de en medio: la
+          conversación nunca pasa de max-w-3xl, así que en un monitor ancho la columna
+          seguía creciendo y dejaba cientos de píxeles en blanco entre el texto y el mapa.
+          Con el tope, ese espacio se lo queda el mapa. */}
+      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col bg-white 2xl:max-w-[860px]">
         <div
           ref={scrollRef}
           onScroll={onScrollMensajes}
@@ -254,7 +259,10 @@ export function ChatView({
           la derecha toca el borde de la ventana, y ahí una esquina redonda solo enseñaría
           fondo. La sombra hacia la izquierda lo separa del chat sin necesidad de un borde,
           y de paso no se pierde ni un píxel de mapa. */}
-      <div className="hidden shrink-0 overflow-hidden rounded-l-3xl shadow-[-10px_0_28px_rgba(28,25,23,0.07)] lg:block lg:h-full lg:w-[460px] xl:w-[640px] 2xl:w-[820px]">
+      {/* `lg:shrink-0` mantiene los anchos fijos hasta xl; a partir de 2xl el mapa pasa a
+          `flex-1` y se queda todo lo que le sobra al chat. Las dos reglas no chocan porque
+          la de 2xl va después en la hoja de estilos. */}
+      <div className="hidden overflow-hidden rounded-l-[2rem] shadow-[-12px_0_32px_rgba(28,25,23,0.09)] lg:block lg:h-full lg:w-[460px] lg:shrink-0 xl:w-[640px] 2xl:w-auto 2xl:flex-1">
         <TripMap puntos={puntos} renderContent={renderPuntoMapaEscritorio} />
       </div>
 
