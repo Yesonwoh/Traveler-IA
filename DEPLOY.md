@@ -36,26 +36,33 @@ sigue siendo lo correcto.
 
 ---
 
-## 2. Webhook de Stripe — *no existe ninguno hoy*
+## 2. Stripe en modo live — hecho
 
-Comprobado contra la API de Stripe el 6 de agosto: **cero endpoints configurados**, y la
-cuenta está en **modo test**.
+- [x] Cuenta verificada para cobrar (`charges_enabled` y `payouts_enabled`, España, EUR)
+- [x] Precio anual creado en live: `price_1U1Px599OOsPnX7673YJ2AGa` — 39,00 €/año
+- [x] Precio mensual live reutilizado: `price_1TklLF99OOsPnX76oUDWlFT8` — 4,99 €/mes
+- [x] Webhook `we_1U1Pxo99OOsPnX76FMlFjnya` en `https://traveleria.app/api/webhooks/stripe`
+- [x] Claves live y `whsec_` cargadas en Vercel **solo en Production**
+- [x] Redesplegado
 
-- [ ] Decidir si pasas a modo **live** (cobrar de verdad) o sigues en test
-- [ ] Si pasas a live: sustituir en Vercel `STRIPE_SECRET_KEY`,
-      `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_ID_MONTHLY` y
-      `STRIPE_PRICE_ID_YEARLY` por los de live (los precios **no** se comparten entre modos)
-- [ ] Stripe → *Developers → Webhooks* → **Add endpoint**
-- [ ] URL: `https://traveleria.app/api/webhooks/stripe`
-- [ ] Eventos: `checkout.session.completed`, `customer.subscription.updated`,
-      `customer.subscription.deleted`
-- [ ] Copiar su secreto (`whsec_...`) a `STRIPE_WEBHOOK_SECRET` en Vercel
-- [ ] Redesplegar
+**Producción cobra de verdad. Preview se queda en modo test a propósito**, para poder
+probar el flujo de pago sin mover dinero. Si algún día vuelves a tocar estas variables,
+`vercel env rm NOMBRE production` **borra también la copia de Preview** cuando la entrada
+es compartida: hay que volver a añadirla con el valor de test.
 
-**Si te lo saltas:** el usuario paga, Stripe cobra y tu base de datos nunca se entera.
-Cobras sin dar Premium.
+**Verificado el 6 de agosto:** el endpoint responde `Firma inválida` (400) ante una firma
+falsa, lo que prueba que `STRIPE_WEBHOOK_SECRET` llega a la función y la verificación
+funciona.
 
-**Comprobación:** pago con tarjeta de prueba → `profiles.subscription_status` pasa a `premium`.
+**Pendiente de probar con dinero real:** un pago de verdad (puedes reembolsarlo desde
+Stripe al momento) y confirmar que `profiles.subscription_status` pasa a `premium`.
+
+### Nota: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` no se usa
+
+No aparece en ningún sitio del código: el pago va por Checkout alojado, con la sesión
+creada en el servidor (`src/actions/stripe.ts`) y un redirect. No hay Stripe.js en el
+navegador. Se mantiene cargada por si algún día se integra el pago embebido, pero hoy no
+hace nada.
 
 ---
 
