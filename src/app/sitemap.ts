@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://traveler-ia.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://traveleria.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const ahora = new Date();
