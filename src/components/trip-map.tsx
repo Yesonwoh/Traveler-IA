@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from "@vis.gl/react-google-maps";
+import { Crosshair, MapPinned } from "lucide-react";
 import { resolveIcono } from "@/lib/map-icons";
 
 export type PuntoMapa = {
@@ -13,8 +14,6 @@ export type PuntoMapa = {
   direccion?: string | null;
   opinion?: string | null;
 };
-
-const BARCELONA = { lat: 41.3874, lng: 2.1686 };
 
 const NARANJA = "#f97316";
 const NARANJA_OSCURO = "#ea580c";
@@ -38,6 +37,21 @@ const CLOSE_DELAY_MS = 150;
 const OCULTA_POIS_DE_GOOGLE =
   "REQUIRED_AND_HIDES_OPTIONAL" as unknown as google.maps.CollisionBehavior;
 
+/** Encaja la cámara sobre todos los puntos. Lo comparten el ajuste automático y el botón. */
+function encajarPuntos(map: google.maps.Map, puntos: PuntoMapa[]) {
+  if (puntos.length === 0) return;
+
+  if (puntos.length === 1) {
+    map.setCenter({ lat: puntos[0].lat, lng: puntos[0].lng });
+    map.setZoom(14);
+    return;
+  }
+
+  const bounds = new google.maps.LatLngBounds();
+  puntos.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
+  map.fitBounds(bounds, 64);
+}
+
 /** Ajusta la cámara del mapa: centra en un punto concreto (foco elegido en una lista) o encaja todos los puntos. */
 function CameraControl({ puntos, focusedId }: { puntos: PuntoMapa[]; focusedId?: string | null }) {
   const map = useMap();
@@ -53,21 +67,45 @@ function CameraControl({ puntos, focusedId }: { puntos: PuntoMapa[]; focusedId?:
       return;
     }
 
-    if (puntos.length === 0) return;
-
-    if (puntos.length === 1) {
-      map.setCenter({ lat: puntos[0].lat, lng: puntos[0].lng });
-      map.setZoom(14);
-      return;
-    }
-
-    const bounds = new google.maps.LatLngBounds();
-    puntos.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
-    map.fitBounds(bounds, 64);
+    encajarPuntos(map, puntos);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, key, focusedId]);
 
   return null;
+}
+
+/**
+ * El único control del mapa, y hace dos trabajos con un solo elemento: dice cuántos sitios
+ * hay en el viaje y devuelve la vista a todos ellos.
+ *
+ * El segundo trabajo era un agujero real: con `disableDefaultUI` no hay controles de Google,
+ * así que al arrastrar el mapa lejos no había forma de volver salvo recargar la página.
+ */
+function ContadorYEncuadre({ puntos }: { puntos: PuntoMapa[] }) {
+  const map = useMap();
+  const total = puntos.length;
+
+  // `puntos` se reconstruye en cada render del padre, así que la identidad del array no
+  // sirve como dependencia; lo que importa es qué puntos hay.
+  const clave = puntos.map((p) => p.id).join(",");
+  const volver = useCallback(() => {
+    if (map) encajarPuntos(map, puntos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, clave]);
+
+  const etiqueta = total === 1 ? "1 sitio" : `${total} sitios`;
+
+  return (
+    <button
+      onClick={volver}
+      title="Volver a ver todos los sitios"
+      aria-label={`Encuadrar ${etiqueta} en el mapa`}
+      className="absolute left-3 top-3 z-10 flex cursor-pointer items-center gap-1.5 rounded-full bg-white/95 py-1.5 pl-2.5 pr-3 text-sm font-semibold text-stone-700 shadow-md shadow-stone-900/15 backdrop-blur-sm transition-colors hover:bg-white hover:text-stone-900"
+    >
+      <Crosshair size={15} strokeWidth={2.5} aria-hidden className="text-brand" />
+      {etiqueta}
+    </button>
+  );
 }
 
 function FadeIn({ children }: { children: ReactNode }) {
@@ -89,16 +127,53 @@ function FadeIn({ children }: { children: ReactNode }) {
   );
 }
 
-function PinMarker({ activo }: { activo: boolean }) {
+/**
+ * La chincheta va como UNA silueta de gota dibujada en SVG, no como un círculo con un
+ * rombo suelto debajo: así el anillo blanco recorre el contorno entero sin costuras, que
+ * es lo que separa el pin de la teja beige, del verde de parque o del azul de río.
+ *
+ * Activo = colores invertidos (relleno blanco, naranja oscuro dentro), y el anillo pasa a
+ * naranja para que siga recortando sobre el mapa.
+ */
+function Chincheta({ activo, children }: { activo: boolean; children: ReactNode }) {
   return (
     <div
-      className="-mt-[7px] h-3 w-3 rotate-45 rounded-[2px] border transition-colors duration-150"
+      className="relative transition-transform duration-150"
       style={{
-        background: activo ? "#ffffff" : NARANJA,
-        borderColor: activo ? NARANJA_OSCURO : "transparent",
-        boxShadow: "0 1px 2px rgba(28,25,23,0.28)",
+        transform: activo ? "scale(1.1)" : "scale(1)",
+        filter: "drop-shadow(0 2px 3px rgba(28,25,23,0.34))",
       }}
-    />
+    >
+      <svg width="38" height="48" viewBox="0 0 38 48" aria-hidden>
+        <path
+          d="M19 46.5C19 46.5 33.5 30 33.5 19A14.5 14.5 0 1 0 4.5 19C4.5 30 19 46.5 19 46.5Z"
+          fill={activo ? "#ffffff" : NARANJA}
+          stroke={activo ? NARANJA_OSCURO : "#ffffff"}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {/* el icono se centra en la parte circular (cy=19), no en la caja entera */}
+      <div className="absolute left-0 top-0 flex h-[38px] w-[38px] items-center justify-center">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Lo que ve el usuario mientras el viaje todavía no tiene ni un sitio en el mapa. */
+function MapaVacio() {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-stone-100 px-8 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-light">
+        <MapPinned size={24} strokeWidth={2} className="text-brand-dark" aria-hidden />
+      </div>
+      <p className="text-base font-bold text-stone-700">Aquí van a caer tus sitios</p>
+      <p className="max-w-[15rem] text-pretty text-sm leading-relaxed text-stone-500">
+        Cuéntale a la IA a dónde quieres ir y cada sitio que te proponga aparece marcado
+        aquí.
+      </p>
+    </div>
   );
 }
 
@@ -138,7 +213,11 @@ export function TripMap({
     closeTimer.current = setTimeout(() => setHoveredId(null), CLOSE_DELAY_MS);
   }
 
-  const center = puntos[0] ? { lat: puntos[0].lat, lng: puntos[0].lng } : BARCELONA;
+  // Sin puntos, el mapa se quedaba enseñando medio mundo desde Barcelona: un rectángulo
+  // que no dice nada y que además hace pensar que algo ha fallado.
+  if (puntos.length === 0) return <MapaVacio />;
+
+  const center = { lat: puntos[0].lat, lng: puntos[0].lng };
   const hovered = showHoverCard ? puntos.find((p) => p.id === hoveredId) : undefined;
 
   return (
@@ -146,12 +225,13 @@ export function TripMap({
       <Map
         mapId={MAP_ID}
         defaultCenter={center}
-        defaultZoom={puntos.length ? 12 : 4}
+        defaultZoom={12}
         gestureHandling="greedy"
         disableDefaultUI
-        className="h-full w-full"
+        className="relative h-full w-full"
       >
         <CameraControl puntos={puntos} focusedId={focusedId} />
+        <ContadorYEncuadre puntos={puntos} />
         {puntos.map((p) => {
           const Icono = resolveIcono(p);
           const activo = p.id === hoveredId || p.id === focusedId;
@@ -169,28 +249,9 @@ export function TripMap({
               onMouseLeave={scheduleClose}
               onClick={() => onPuntoClick?.(p)}
             >
-              <div className="flex flex-col items-center">
-                {/* El anillo blanco es lo que separa el pin del mapa: sobre teja beige,
-                    verde de parque o azul de río, el naranja solo no recorta. */}
-                {/* Activo = colores invertidos (fondo blanco, icono naranja). El anillo
-                    pasa a naranja para que el pin siga recortando sobre el mapa. */}
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full border-[2.5px] transition-transform duration-150"
-                  style={{
-                    background: activo ? "#ffffff" : NARANJA,
-                    borderColor: activo ? NARANJA_OSCURO : "#ffffff",
-                    boxShadow: "0 2px 6px rgba(28,25,23,0.35)",
-                    transform: activo ? "scale(1.12)" : "scale(1)",
-                  }}
-                >
-                  <Icono
-                    size={18}
-                    color={activo ? NARANJA_OSCURO : "#ffffff"}
-                    strokeWidth={2.5}
-                  />
-                </div>
-                <PinMarker activo={activo} />
-              </div>
+              <Chincheta activo={activo}>
+                <Icono size={17} color={activo ? NARANJA_OSCURO : "#ffffff"} strokeWidth={2.5} />
+              </Chincheta>
             </AdvancedMarker>
           );
         })}
@@ -198,7 +259,8 @@ export function TripMap({
         {hovered && (
           <InfoWindow
             position={{ lat: hovered.lat, lng: hovered.lng }}
-            pixelOffset={[0, -44]}
+            // la chincheta mide 48px y su punta es el ancla: la tarjeta sube por encima
+            pixelOffset={[0, -50]}
             headerDisabled
             onCloseClick={() => setHoveredId(null)}
           >
