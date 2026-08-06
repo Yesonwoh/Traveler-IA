@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { SITE_URL_CONFIGURADA } from "@/lib/site-url";
 
 const RUTA_POR_DEFECTO = "/mis-viajes";
 
@@ -18,8 +19,7 @@ export function rutaSegura(next: string | null | undefined): string {
 // que en producción detrás de un proxy suele llegar vacía y el enlace acaba siendo
 // "null/auth/callback". Preferimos NEXT_PUBLIC_SITE_URL cuando está configurada.
 export async function urlDelSitio(): Promise<string> {
-  const configurada = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configurada) return configurada.replace(/\/+$/, "");
+  if (SITE_URL_CONFIGURADA) return SITE_URL_CONFIGURADA;
 
   const cabeceras = await headers();
   const origin = cabeceras.get("origin");
