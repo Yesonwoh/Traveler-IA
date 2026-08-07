@@ -10,6 +10,17 @@ Google: correcto, pero de nadie.
 
 ## Cómo aplicarlo
 
+> ⚠️ **Hay DOS formatos de JSON de estilo de Google y no son compatibles.**
+>
+> - El **clásico** (`[{ "featureType": …, "elementType": …, "stylers": […] }]`) es el que
+>   se usaba con la opción `styles` en código y con los Map ID **raster**.
+> - El **de estilo en la nube** (`{ "variant", "backgroundColor", "styles": [{ "id",
+>   "geometry", "label" }] }`) es el que aceptan los Map ID **vector**, que es el nuestro.
+>
+> `map-style.json` está en el **formato nuevo**. Si se pega el clásico, la consola marca
+> una advertencia por regla, las descarta todas y vuelve al estilo por defecto — sin decir
+> en ningún sitio que el problema es el formato.
+
 1. **Google Cloud Console** → *Google Maps Platform* → **Map Styles** → *Create Style*
 2. Elegir *Import JSON* y pegar el contenido de `map-style.json`
 3. Guardar con un nombre reconocible (p. ej. `Traveler IA — papel cálido`)
