@@ -17,6 +17,53 @@ const initialState: PerfilState = { error: null };
 const SELECT_CLASS =
   "h-11 w-full cursor-pointer rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
 
+/**
+ * Desplegable de preferencia.
+ *
+ * Si el valor guardado no está entre las opciones, se añade como opción extra en vez
+ * de dejar que el `<select>` lo pinte como "Sin preferencia". Sin esto, un valor que
+ * la lista no reconozca desaparece de la pantalla y **el siguiente guardado lo borra
+ * de la base de datos**, sin que el usuario haya tocado ese campo.
+ */
+function SelectorPreferencia({
+  name,
+  label,
+  valor,
+  onChange,
+  opciones,
+}: {
+  name: string;
+  label: string;
+  valor: string;
+  onChange: (v: string) => void;
+  opciones: readonly { readonly value: string; readonly label: string }[];
+}) {
+  const desconocido = valor !== "" && !opciones.some((o) => o.value === valor);
+
+  return (
+    <div>
+      <label htmlFor={name} className="mb-1 block text-sm font-medium text-stone-700">
+        {label}
+      </label>
+      <select
+        id={name}
+        name={name}
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        className={SELECT_CLASS}
+      >
+        <option value="">Sin preferencia</option>
+        {opciones.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+        {desconocido && <option value={valor}>{valor}</option>}
+      </select>
+    </div>
+  );
+}
+
 export function PreferenciasForm({
   ubicacion,
   fechaNacimiento,
@@ -35,8 +82,12 @@ export function PreferenciasForm({
   notasViaje: string;
 }) {
   const [state, formAction, isPending] = useActionState(actualizarPerfil, initialState);
-  // controlados: si fueran `defaultValue`, al revalidar tras guardar volverían
+  // Controlados: si fueran `defaultValue`, al revalidar tras guardar volverían
   // visualmente a "Sin preferencia" aunque el valor sí estuviera guardado.
+  //
+  // Ojo: `useState(prop)` solo hace caso al valor inicial en el primer montaje, así que
+  // esto por sí solo deja el formulario sordo a lo que traiga el servidor después. Quien
+  // lo resincroniza es la `key` que le pone la página (ver configuracion/page.tsx).
   const [intereses, setIntereses] = useState<string[]>(interesesIniciales);
   const [presupuesto, setPresupuesto] = useState(presupuestoEstilo);
   const [alojamiento, setAlojamiento] = useState(tipoAlojamiento);
@@ -99,54 +150,27 @@ export function PreferenciasForm({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">Estilo de gasto</label>
-          <select
-            name="presupuesto_estilo"
-            value={presupuesto}
-            onChange={(e) => setPresupuesto(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Sin preferencia</option>
-            {PRESUPUESTO_ESTILOS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">Alojamiento</label>
-          <select
-            name="tipo_alojamiento"
-            value={alojamiento}
-            onChange={(e) => setAlojamiento(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Sin preferencia</option>
-            {TIPOS_ALOJAMIENTO.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-stone-700">Ritmo de viaje</label>
-          <select
-            name="ritmo_viaje"
-            value={ritmo}
-            onChange={(e) => setRitmo(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="">Sin preferencia</option>
-            {RITMOS_VIAJE.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectorPreferencia
+          name="presupuesto_estilo"
+          label="Estilo de gasto"
+          valor={presupuesto}
+          onChange={setPresupuesto}
+          opciones={PRESUPUESTO_ESTILOS}
+        />
+        <SelectorPreferencia
+          name="tipo_alojamiento"
+          label="Alojamiento"
+          valor={alojamiento}
+          onChange={setAlojamiento}
+          opciones={TIPOS_ALOJAMIENTO}
+        />
+        <SelectorPreferencia
+          name="ritmo_viaje"
+          label="Ritmo de viaje"
+          valor={ritmo}
+          onChange={setRitmo}
+          opciones={RITMOS_VIAJE}
+        />
       </div>
 
       <div>
