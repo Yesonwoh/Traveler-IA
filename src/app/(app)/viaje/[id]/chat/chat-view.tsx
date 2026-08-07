@@ -131,10 +131,20 @@ export function ChatView({
     setError(null);
 
     try {
-      const respuesta = await enviarMensaje(viajeId, texto);
-      setMensajes((prev) => [...prev, respuesta]);
+      const res = await enviarMensaje(viajeId, texto);
+      if (res.ok) {
+        setMensajes((prev) => [...prev, res.mensaje]);
+      } else {
+        // Se retira el mensaje optimista y se le devuelve el texto al campo: si se
+        // queda colgado en la conversación parece enviado, y encima pierde lo escrito.
+        setMensajes((prev) => prev.filter((m) => m.id !== optimistic.id));
+        setInput(texto);
+        setError(res.error);
+      }
     } catch {
-      setError("La IA no pudo responder. Inténtalo de nuevo.");
+      setMensajes((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setInput(texto);
+      setError("No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.");
     } finally {
       setIsPending(false);
     }
@@ -245,7 +255,7 @@ export function ChatView({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ej: Quiero ir a Portugal con 200€ desde Madrid"
-              className="h-11 min-w-0 flex-1 rounded-xl border border-stone-300 px-4 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-stone-300 px-4 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
             <Button
               type="submit"

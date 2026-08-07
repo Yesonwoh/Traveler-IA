@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, PRICE_IDS } from "@/lib/stripe/client";
 import { DIAS_PRUEBA } from "@/lib/suscripcion/prueba";
 import { tienePruebaDisponible } from "@/lib/suscripcion/elegibilidad";
@@ -26,7 +27,20 @@ async function getOrCreateStripeCustomer(
     metadata: { supabase_user_id: userId },
   });
 
-  await supabase.from("profiles").update({ stripe_customer_id: customer.id }).eq("id", userId);
+  // Con service_role y no con la sesión del usuario: desde la migración 0012, el rol
+  // `authenticated` ya no tiene UPDATE sobre stripe_customer_id, precisamente para que
+  // nadie pueda apuntar su checkout al cliente de Stripe de otra persona. El dato que
+  // se escribe aquí lo acaba de generar Stripe y el userId ya viene verificado por
+  // quien llama, así que saltarse RLS es seguro y necesario.
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({ stripe_customer_id: customer.id })
+    .eq("id", userId);
+
+  // Si no se guarda, el siguiente intento crearía OTRO cliente en Stripe para la misma
+  // persona y la comprobación de "prueba ya gastada" dejaría de encontrar su historial.
+  if (error) throw new Error("No se pudo guardar el cliente de Stripe.");
 
   return customer.id;
 }

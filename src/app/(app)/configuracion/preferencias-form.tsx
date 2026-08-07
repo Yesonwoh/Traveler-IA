@@ -160,7 +160,7 @@ export function PreferenciasForm({
           rows={2}
           maxLength={600}
           placeholder="Ej: soy vegetariano, viajo con movilidad reducida, odio madrugar..."
-          className="w-full resize-none rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
+          className="w-full resize-none rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </div>
 
