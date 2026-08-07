@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { stripe } from "@/lib/stripe/client";
 
 export type PerfilState = { error: string | null; success?: boolean };
 
@@ -89,18 +90,74 @@ export async function cambiarContrasena(
   return { error: null, success: true };
 }
 
-export async function eliminarCuenta() {
+/**
+ * Suscripciones que siguen generando cobros. `canceled` e `incomplete_expired` ya
+ * están muertas; el resto, incluida `trialing`, acaba pasando por caja.
+ */
+const SUSCRIPCION_VIVA = new Set([
+  "active",
+  "trialing",
+  "past_due",
+  "unpaid",
+  "incomplete",
+  "paused",
+]);
+
+export async function eliminarCuenta(): Promise<PerfilState | void> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // PRIMERO Stripe, y si falla no se borra nada.
+  //
+  // Borrar la cuenta no cancelaba la suscripción: a quien se diera de baja siendo
+  // premium le seguían cobrando 4,99 € todos los meses, sin cuenta, sin servicio y
+  // sin ninguna forma de pararlo desde la app. Y al desaparecer el perfil se perdía
+  // el stripe_customer_id, así que ni siquiera quedaba rastro para devolvérselo.
+  const { data: perfil } = await supabase
+    .from("profiles")
+    .select("stripe_customer_id")
+    .eq("id", user.id)
+    .maybeSingle<{ stripe_customer_id: string | null }>();
+
+  if (perfil?.stripe_customer_id) {
+    try {
+      const suscripciones = await stripe.subscriptions.list({
+        customer: perfil.stripe_customer_id,
+        status: "all",
+        limit: 100,
+      });
+      for (const suscripcion of suscripciones.data) {
+        if (SUSCRIPCION_VIVA.has(suscripcion.status)) {
+          await stripe.subscriptions.cancel(suscripcion.id);
+        }
+      }
+    } catch {
+      // Abortar es lo correcto: es preferible que se quede con la cuenta y lo intente
+      // otra vez a borrársela dejándole un cobro recurrente que ya no puede parar.
+      return {
+        error:
+          "No hemos podido cancelar tu suscripción, así que no hemos borrado nada para no dejarte pagando. Inténtalo en un rato o escríbenos a contacto@traveleria.app.",
+      };
+    }
+  }
+
   // borra los viajes del usuario primero: encadena el borrado de mensajes,
   // recomendaciones, favoritos y reservas vía "on delete cascade" por viaje_id.
   await supabase.from("viajes").delete().eq("user_id", user.id);
 
   const admin = createAdminClient();
+  // Los ficheros de storage no cuelgan de auth.users, así que hay que barrerlos a mano
+  // o se quedan huérfanos ocupando sitio para siempre.
+  await Promise.all([
+    admin.storage.from("avatars").remove([`${user.id}/avatar.jpg`, `${user.id}/avatar.png`, `${user.id}/avatar.webp`]),
+    admin.storage.from("portadas").remove([`${user.id}/portada.jpg`, `${user.id}/portada.png`, `${user.id}/portada.webp`]),
+  ]).catch(() => {
+    // un fichero huérfano no justifica dejar la cuenta a medio borrar
+  });
+
   await admin.auth.admin.deleteUser(user.id);
 
   await supabase.auth.signOut();
