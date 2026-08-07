@@ -132,14 +132,28 @@ export async function guardarReserva(params: {
 
 export async function marcarComoReservado(id: string, viajeId: string) {
   const supabase = await createClient();
-  await supabase.from("reservas").update({ estado: "reservado" }).eq("id", id);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  await supabase
+    .from("reservas")
+    .update({ estado: "reservado" })
+    .eq("id", id)
+    .eq("user_id", user.id);
   revalidatePath(`/viaje/${viajeId}/reservas`);
   revalidatePath(`/viaje/${viajeId}/vuelos`);
 }
 
 export async function eliminarReserva(id: string, viajeId: string) {
   const supabase = await createClient();
-  await supabase.from("reservas").delete().eq("id", id);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  await supabase.from("reservas").delete().eq("id", id).eq("user_id", user.id);
   revalidatePath(`/viaje/${viajeId}/reservas`);
   revalidatePath(`/viaje/${viajeId}/vuelos`);
 }

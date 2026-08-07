@@ -39,11 +39,14 @@ export async function buscarVuelosViaje(params: BusquedaVuelos): Promise<Resulta
     };
   }
 
-  // guardamos la ruta resuelta en el viaje para no repetir el autocompletado
+  // guardamos la ruta resuelta en el viaje para no repetir el autocompletado.
+  // Acotado también por user_id: RLS ya lo impide, pero así el filtro no depende
+  // de que ninguna política siga siendo la que es hoy.
   await supabase
     .from("viajes")
     .update({ origen_iata: desde.iata, destino_iata: hasta.iata })
-    .eq("id", params.viajeId);
+    .eq("id", params.viajeId)
+    .eq("user_id", user.id);
 
   const resultado = await buscarVuelos({
     origenIata: desde.iata,

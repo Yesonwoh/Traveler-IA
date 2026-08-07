@@ -229,12 +229,28 @@ export async function crearViajeGuiado(datos: BriefingViaje): Promise<ViajeState
 
 export async function toggleFavoritoViaje(viajeId: string, esFavorito: boolean) {
   const supabase = await createClient();
-  await supabase.from("viajes").update({ es_favorito: !esFavorito }).eq("id", viajeId);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  // El `user_id` es redundante mientras RLS esté bien puesto, y esa es justo la razón
+  // de ponerlo: si algún día una política cambia, esto sigue acotado por sí solo.
+  await supabase
+    .from("viajes")
+    .update({ es_favorito: !esFavorito })
+    .eq("id", viajeId)
+    .eq("user_id", user.id);
   revalidatePath("/mis-viajes");
 }
 
 export async function eliminarViaje(viajeId: string) {
   const supabase = await createClient();
-  await supabase.from("viajes").delete().eq("id", viajeId);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  await supabase.from("viajes").delete().eq("id", viajeId).eq("user_id", user.id);
   revalidatePath("/mis-viajes");
 }

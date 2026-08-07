@@ -53,6 +53,13 @@ export async function agregarFavorito(params: {
 
 export async function eliminarFavorito(id: string, viajeId: string) {
   const supabase = await createClient();
-  await supabase.from("favoritos").delete().eq("id", id);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  // El `user_id` es redundante mientras RLS esté bien puesto, y esa es justo la razón
+  // de ponerlo: si algún día una política cambia, esto sigue acotado por sí solo.
+  await supabase.from("favoritos").delete().eq("id", id).eq("user_id", user.id);
   revalidatePath(`/viaje/${viajeId}/favoritos`);
 }
