@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
 import { actualizarPerfil, type PerfilState } from "@/actions/perfil";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +81,28 @@ export function PreferenciasForm({
   ritmoViaje: string;
   notasViaje: string;
 }) {
-  const [state, formAction, isPending] = useActionState(actualizarPerfil, initialState);
+  // Envío manual y NO `<form action={serverAction}>` a propósito.
+  //
+  // React 19 resetea el formulario en cuanto termina una Server Action. Con campos
+  // controlados eso deja el DOM y el estado desacompasados: el estado ya tiene el
+  // valor nuevo, el reset devuelve el `<select>` al que tenía al renderizar, y como
+  // para React nada ha cambiado, no vuelve a escribirlo. Resultado: guardas, sale
+  // "Guardado." y en pantalla sigue el valor viejo hasta que recargas.
+  //
+  // Se puede tapar remontando el formulario con una `key`, pero eso reinicia el
+  // estado de useActionState y entonces se pierde el mensaje. Controlando el envío
+  // a mano no hay reset que tapar.
+  const [state, setState] = useState<PerfilState>(initialState);
+  const [isPending, startTransition] = useTransition();
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (isPending) return;
+    const datos = new FormData(e.currentTarget);
+    startTransition(async () => {
+      setState(await actualizarPerfil(initialState, datos));
+    });
+  }
 
   // Todos los campos controlados, incluidos ubicación y fecha: el formulario envía
   // SIEMPRE los siete, así que uno solo que se quede con un valor viejo lo escribe
@@ -130,7 +151,7 @@ export function PreferenciasForm({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-stone-700">Dónde vives</label>
