@@ -3,14 +3,8 @@ import { Zap } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SiteFooter } from "@/components/site-footer";
 import { AppPreview } from "@/components/landing/app-preview";
+import { IdeaHero } from "@/components/landing/idea-hero";
 import { createClient } from "@/lib/supabase/server";
-
-const EJEMPLOS = [
-  "Finde en Lisboa con 100€",
-  "Interrail 10 días por Europa",
-  "Roma 3 días desde Barcelona",
-  "Escapada solo con 50€",
-];
 
 /**
  * Trucos del banco que usa el propio modelo (ver lib/ai/prompts.ts). Se enseñan tal cual
@@ -59,24 +53,10 @@ export default async function Home() {
             con sitios concretos, todos marcados en el mapa, y los trucos para que salga por
             bastante menos.
           </p>
-          <Link
-            href={destino}
-            className="rounded-full bg-brand px-8 py-4 text-base font-bold text-white shadow-lg shadow-brand/25 transition-colors hover:bg-brand-dark"
-          >
-            {user ? "Ir a mis viajes" : "Empezar viaje"}
-          </Link>
-
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-            {EJEMPLOS.map((ejemplo) => (
-              <Link
-                key={ejemplo}
-                href={destino}
-                className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-stone-600 transition-colors hover:border-brand hover:text-brand-dark"
-              >
-                {ejemplo}
-              </Link>
-            ))}
-          </div>
+          {/* El titular promete una conversación: aquí es donde se empieza. Antes
+              había un botón a /registro y cuatro sugerencias que también eran
+              enlaces a /registro — se pedía la cuenta antes de que hubiera intención. */}
+          <IdeaHero destino={destino} />
         </section>
 
         {/* La prueba: en vez de describir el producto con tres iconos, se enseña. */}

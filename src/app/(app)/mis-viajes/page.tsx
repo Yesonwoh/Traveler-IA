@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { leerPerfil } from "@/lib/supabase/perfil";
 import { capitalizar } from "@/lib/utils";
 import { CrearViajeDialog } from "./crear-viaje-dialog";
+import { RetomarIdea } from "./retomar-idea";
 import { TripCard } from "./trip-card";
 
 export default async function MisViajesPage() {
@@ -26,6 +27,8 @@ export default async function MisViajesPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
+      <RetomarIdea />
+
       <h1 className="text-2xl font-bold text-stone-900">Mis viajes</h1>
       <p className="mt-1 text-stone-500">
         Cada viaje tiene su propia IA, sus favoritos y sus reservas.

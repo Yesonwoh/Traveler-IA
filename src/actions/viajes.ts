@@ -113,6 +113,96 @@ async function insertarViaje(
   return basico ?? null;
 }
 
+async function sumarConversacion(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("conversaciones_creadas")
+    .eq("id", userId)
+    .single();
+
+  await supabase
+    .from("profiles")
+    .update({ conversaciones_creadas: (profile?.conversaciones_creadas ?? 0) + 1 })
+    .eq("id", userId);
+}
+
+/**
+ * Primer turno del chat: la propuesta, el título de verdad y la foto de portada.
+ * Si la IA falla no se propaga el error a propósito — el viaje ya existe con el
+ * mensaje del usuario dentro y la conversación se puede seguir a mano.
+ */
+async function montarPrimeraPropuesta(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  viajeId: string,
+  userId: string,
+  texto: string,
+  ciudadDeReserva: string
+) {
+  try {
+    const respuesta = await procesarMensajeIA({
+      viajeId,
+      userId,
+      texto,
+      instrucciones: BRIEFING_SYSTEM_PROMPT,
+      // el título y la portada los resolvemos aquí, con el mensaje completo delante
+      portadaAutomatica: false,
+    });
+
+    const titulo = await generarTituloViaje(texto, respuesta.texto);
+
+    if (titulo?.titulo) {
+      await supabase
+        .from("viajes")
+        .update({ nombre_del_viaje: titulo.titulo })
+        .eq("id", viajeId);
+    }
+
+    await ponerFotoPortada(viajeId, respuesta.texto, titulo?.ciudad || ciudadDeReserva);
+  } catch {
+    // ver comentario de la cabecera
+  }
+}
+
+const IdeaSchema = z
+  .string()
+  .trim()
+  .min(3, "Cuéntanos un poco más.")
+  .max(600);
+
+/**
+ * Crea un viaje a partir de la frase suelta que alguien escribe en la portada.
+ *
+ * Es el mismo destino que `crearViajeGuiado` por otro camino: allí el usuario
+ * rellena un formulario, aquí escribe como le hablaría a un colega. No hay datos
+ * estructurados que guardar (origen, fechas, presupuesto), así que el buscador
+ * de vuelos de ese viaje arranca vacío hasta que salgan en la conversación.
+ */
+export async function crearViajeDesdeIdea(texto: string): Promise<ViajeState> {
+  const parsed = IdeaSchema.safeParse(texto);
+  if (!parsed.success) {
+    return { error: "Cuéntanos algo más de tu viaje para poder montarlo." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const idea = parsed.data;
+  const viaje = await insertarViaje(supabase, user.id, "Viaje nuevo", BriefingSchema.parse({}));
+  if (!viaje) return { error: "No se pudo crear el viaje." };
+
+  await sumarConversacion(supabase, user.id);
+  await montarPrimeraPropuesta(supabase, viaje.id, user.id, idea, "");
+
+  revalidatePath("/mis-viajes");
+  redirect(`/viaje/${viaje.id}/chat`);
+}
+
 export async function crearViajeGuiado(datos: BriefingViaje): Promise<ViajeState> {
   const parsed = BriefingSchema.safeParse(datos);
   if (!parsed.success) return { error: "Revisa los datos del formulario." };
@@ -130,41 +220,8 @@ export async function crearViajeGuiado(datos: BriefingViaje): Promise<ViajeState
   const viaje = await insertarViaje(supabase, user.id, nombreProvisional, parsed.data);
   if (!viaje) return { error: "No se pudo crear el viaje." };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("conversaciones_creadas")
-    .eq("id", user.id)
-    .single();
-
-  await supabase
-    .from("profiles")
-    .update({ conversaciones_creadas: (profile?.conversaciones_creadas ?? 0) + 1 })
-    .eq("id", user.id);
-
-  try {
-    const respuesta = await procesarMensajeIA({
-      viajeId: viaje.id,
-      userId: user.id,
-      texto: briefing,
-      instrucciones: BRIEFING_SYSTEM_PROMPT,
-      // el título y la portada los resolvemos aquí, con el briefing completo delante
-      portadaAutomatica: false,
-    });
-
-    const titulo = await generarTituloViaje(briefing, respuesta.texto);
-
-    if (titulo?.titulo) {
-      await supabase
-        .from("viajes")
-        .update({ nombre_del_viaje: titulo.titulo })
-        .eq("id", viaje.id);
-    }
-
-    await ponerFotoPortada(viaje.id, respuesta.texto, titulo?.ciudad || parsed.data.destino);
-  } catch {
-    // Si la IA falla, el viaje ya existe con el briefing del usuario dentro:
-    // puede seguir la conversación a mano desde el chat.
-  }
+  await sumarConversacion(supabase, user.id);
+  await montarPrimeraPropuesta(supabase, viaje.id, user.id, briefing, parsed.data.destino);
 
   revalidatePath("/mis-viajes");
   redirect(`/viaje/${viaje.id}/chat`);
