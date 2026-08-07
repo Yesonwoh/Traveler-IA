@@ -82,17 +82,46 @@ export function PreferenciasForm({
   notasViaje: string;
 }) {
   const [state, formAction, isPending] = useActionState(actualizarPerfil, initialState);
-  // Controlados: si fueran `defaultValue`, al revalidar tras guardar volverían
-  // visualmente a "Sin preferencia" aunque el valor sí estuviera guardado.
-  //
-  // Ojo: `useState(prop)` solo hace caso al valor inicial en el primer montaje, así que
-  // esto por sí solo deja el formulario sordo a lo que traiga el servidor después. Quien
-  // lo resincroniza es la `key` que le pone la página (ver configuracion/page.tsx).
+
+  // Todos los campos controlados, incluidos ubicación y fecha: el formulario envía
+  // SIEMPRE los siete, así que uno solo que se quede con un valor viejo lo escribe
+  // encima del bueno al guardar.
+  const [ubi, setUbi] = useState(ubicacion);
+  const [nacimiento, setNacimiento] = useState(fechaNacimiento);
   const [intereses, setIntereses] = useState<string[]>(interesesIniciales);
   const [presupuesto, setPresupuesto] = useState(presupuestoEstilo);
   const [alojamiento, setAlojamiento] = useState(tipoAlojamiento);
   const [ritmo, setRitmo] = useState(ritmoViaje);
   const [notas, setNotas] = useState(notasViaje);
+
+  // Resincronización con el servidor SIN remontar.
+  //
+  // `useState(prop)` solo mira el valor inicial en el primer montaje, así que sin esto
+  // el formulario se queda sordo a lo que traiga el servidor después. Con una `key` en
+  // la página también se arreglaba, pero remontar reinicia el estado de useActionState
+  // y con él se perdía el "Guardado." en verde. Este es el patrón de React para ajustar
+  // estado cuando cambian las props: comparar con lo último visto y corregir en el render.
+  const delServidor = [
+    ubicacion,
+    fechaNacimiento,
+    interesesIniciales.join(","),
+    presupuestoEstilo,
+    tipoAlojamiento,
+    ritmoViaje,
+    notasViaje,
+  ].join("|");
+  const [visto, setVisto] = useState(delServidor);
+
+  if (visto !== delServidor) {
+    setVisto(delServidor);
+    setUbi(ubicacion);
+    setNacimiento(fechaNacimiento);
+    setIntereses(interesesIniciales);
+    setPresupuesto(presupuestoEstilo);
+    setAlojamiento(tipoAlojamiento);
+    setRitmo(ritmoViaje);
+    setNotas(notasViaje);
+  }
 
   function toggleInteres(interes: string) {
     setIntereses((prev) =>
@@ -108,7 +137,8 @@ export function PreferenciasForm({
           <Input
             type="text"
             name="ubicacion"
-            defaultValue={ubicacion}
+            value={ubi}
+            onChange={(e) => setUbi(e.target.value)}
             placeholder="Ej: Madrid, España"
           />
         </div>
@@ -116,7 +146,12 @@ export function PreferenciasForm({
           <label className="mb-1 block text-sm font-medium text-stone-700">
             Fecha de nacimiento
           </label>
-          <Input type="date" name="fecha_nacimiento" defaultValue={fechaNacimiento} />
+          <Input
+            type="date"
+            name="fecha_nacimiento"
+            value={nacimiento}
+            onChange={(e) => setNacimiento(e.target.value)}
+          />
         </div>
       </div>
 

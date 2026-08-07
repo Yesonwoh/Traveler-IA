@@ -78,22 +78,10 @@ export default async function ConfiguracionPage() {
         <p className="mb-4 text-xs text-stone-400">
           Opcional — ayuda a la IA a proponerte mejores planes desde el primer mensaje.
         </p>
-        {/* La `key` obliga a remontar el formulario cuando el servidor trae valores
-            distintos. Sin ella, `useState(prop)` congela lo que hubiera en el primer
-            render y no vuelve a mirar el servidor jamás: una pestaña abierta desde hace
-            rato seguía enseñando datos viejos y, como el formulario envía TODOS los
-            campos, el siguiente guardado los escribía encima de los buenos. Así se
-            perdieron unas preferencias al guardar solo la ubicación. */}
+        {/* Sin `key`: el propio formulario se resincroniza con estas props (ver
+            preferencias-form.tsx). Remontarlo también funcionaba, pero reiniciaba el
+            estado de useActionState y se perdía el "Guardado." en verde. */}
         <PreferenciasForm
-          key={[
-            profile?.ubicacion,
-            profile?.fecha_nacimiento,
-            (profile?.intereses ?? []).join(","),
-            profile?.presupuesto_estilo,
-            profile?.tipo_alojamiento,
-            profile?.ritmo_viaje,
-            profile?.notas_viaje,
-          ].join("|")}
           ubicacion={profile?.ubicacion ?? ""}
           fechaNacimiento={profile?.fecha_nacimiento ?? ""}
           intereses={profile?.intereses ?? []}

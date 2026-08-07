@@ -29,7 +29,8 @@ export function useGuardarRecomendacion(recomendacion: RecomendacionDTO, viajeId
     guardados?.marcar(recomendacion.id);
   }
 
-  async function abrirAfiliado() {
+  /** Crea la reserva (con su enlace de afiliado) y devuelve la URL, sin abrir nada. */
+  async function anotarReserva() {
     const { urlAfiliado } = await guardarReserva({
       viajeId,
       recomendacionId: recomendacion.id,
@@ -38,23 +39,52 @@ export function useGuardarRecomendacion(recomendacion: RecomendacionDTO, viajeId
       direccion: recomendacion.direccion,
       countryCode: recomendacion.countryCode,
     });
+    return urlAfiliado;
+  }
+
+  async function abrirAfiliado() {
+    const urlAfiliado = await anotarReserva();
     if (urlAfiliado) window.open(urlAfiliado, "_blank", "noopener,noreferrer");
   }
 
+  async function anotarFavorito() {
+    await agregarFavorito({
+      viajeId,
+      recomendacionId: recomendacion.id,
+      nombre: recomendacion.nombre,
+      direccion: recomendacion.direccion,
+      lat: recomendacion.lat,
+      lng: recomendacion.lng,
+    });
+  }
+
+  /**
+   * Guardar un sitio lo mete SIEMPRE en Favoritos, y además en Reservas si se puede
+   * comprar.
+   *
+   * Antes eran dos destinos excluyentes: un museo caía solo en Favoritos y no había
+   * forma de encontrar su entrada después, y una actividad caía solo en Reservas y
+   * desaparecía de la lista de sitios que quieres ver. Las dos pestañas responden a
+   * preguntas distintas —"qué quiero ver" y "qué me falta por comprar"— y un mismo
+   * sitio puede estar en las dos.
+   */
   function guardar() {
     startTransition(async () => {
       if (esReservable) {
-        await abrirAfiliado();
+        // El botón dice "Reservar": abrir el proveedor es la acción que pidió.
+        // Las dos escrituras van en paralelo a propósito — encadenarlas retrasaría
+        // el window.open y algunos navegadores lo tratarían como un popup y lo
+        // bloquearían, que en esta tarjeta es justo donde está la comisión.
+        const [, urlAfiliado] = await Promise.all([anotarFavorito(), anotarReserva()]);
+        if (urlAfiliado) window.open(urlAfiliado, "_blank", "noopener,noreferrer");
+      } else if (tieneEntradas) {
+        // El botón dice "Guardar", así que no se le abre una pestaña sin avisar: la
+        // entrada queda anotada en Reservas y se compra desde allí o desde "Entradas".
+        await Promise.all([anotarFavorito(), anotarReserva()]);
       } else {
-        await agregarFavorito({
-          viajeId,
-          recomendacionId: recomendacion.id,
-          nombre: recomendacion.nombre,
-          direccion: recomendacion.direccion,
-          lat: recomendacion.lat,
-          lng: recomendacion.lng,
-        });
+        await anotarFavorito();
       }
+
       recordar();
     });
   }
@@ -62,7 +92,9 @@ export function useGuardarRecomendacion(recomendacion: RecomendacionDTO, viajeId
   /** Compra de entrada para monumentos: no sustituye a guardarlo en Favoritos. */
   function verEntradas() {
     startTransition(async () => {
-      await abrirAfiliado();
+      // también entra en Favoritos: si alguien va directo a por la entrada, el sitio
+      // debe aparecer igualmente en su lista de "qué quiero ver"
+      await Promise.all([anotarFavorito(), abrirAfiliado()]);
       recordar();
     });
   }
