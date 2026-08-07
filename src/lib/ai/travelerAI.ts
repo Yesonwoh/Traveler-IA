@@ -11,6 +11,7 @@ import {
   EXTRACT_CITY_SYSTEM_PROMPT,
   TITULO_MODEL,
   TITULO_SYSTEM_PROMPT,
+  trucosPrompt,
 } from "./prompts";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -62,6 +63,10 @@ export async function generarRespuestaIA(params: {
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
   ];
+  // Los trucos van justo detrás del prompt base y nunca dentro: el base es largo y
+  // no cambia jamás, así que la caché de prefijo de OpenAI lo reutiliza. Si la
+  // muestra rotatoria viviera dentro, cada turno rompería esa caché entera.
+  messages.push({ role: "system", content: trucosPrompt() });
   if (params.contextoUsuario) {
     messages.push({ role: "system", content: params.contextoUsuario });
   }
