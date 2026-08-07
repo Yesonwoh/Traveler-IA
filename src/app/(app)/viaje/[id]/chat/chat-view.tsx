@@ -142,10 +142,14 @@ export function ChatView({
 
   return (
     /* El alto lo fija el layout del viaje (app shell). Aquí solo se reparte: el chat
-       ocupa lo que sobra y el mapa es una columna fija, ambos a sangre en escritorio. */
-    <div className="flex h-full min-h-0 flex-col lg:flex-row">
+       ocupa lo que sobra y el mapa es una columna fija, ambos a sangre en escritorio.
+
+       El `bg-white` es lo que se ve por el hueco que dejan las esquinas redondeadas del
+       mapa: sin él asomaba el stone-50 del armazón de la app y esas esquinas salían más
+       oscuras que el chat, que es justo lo que delata el recorte. */
+    <div className="flex h-full min-h-0 flex-col bg-white lg:flex-row">
       {/* Sin borde derecho en escritorio: la costura con el mapa ya la hace su esquina
-          redondeada y su sombra, y dos separadores seguidos ensucian.
+          redondeada, y dos separadores seguidos ensucian.
 
           El tope de ancho a partir de 2xl es lo que cierra el hueco de en medio: la
           conversación nunca pasa de max-w-3xl, así que en un monitor ancho la columna
@@ -261,8 +265,12 @@ export function ChatView({
           y de paso no se pierde ni un píxel de mapa. */}
       {/* `lg:shrink-0` mantiene los anchos fijos hasta xl; a partir de 2xl el mapa pasa a
           `flex-1` y se queda todo lo que le sobra al chat. Las dos reglas no chocan porque
-          la de 2xl va después en la hoja de estilos. */}
-      <div className="hidden overflow-hidden rounded-l-[2rem] shadow-[-12px_0_32px_rgba(28,25,23,0.09)] lg:block lg:h-full lg:w-[460px] lg:shrink-0 xl:w-[640px] 2xl:w-auto 2xl:flex-1">
+          la de 2xl va después en la hoja de estilos.
+
+          Sin sombra a propósito: una sombra hacia fuera cae precisamente sobre el hueco de
+          las esquinas y lo ensucia de gris. El recorte ya se lee solo, porque el mapa va
+          lleno de color y el fondo es blanco. */}
+      <div className="hidden overflow-hidden rounded-l-[2rem] lg:block lg:h-full lg:w-[460px] lg:shrink-0 xl:w-[640px] 2xl:w-auto 2xl:flex-1">
         <TripMap puntos={puntos} renderContent={renderPuntoMapaEscritorio} />
       </div>
 
