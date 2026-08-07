@@ -62,6 +62,11 @@ export default function CookiesPage() {
         Nos ayudan a entender de forma agregada cómo se usa la web para mejorarla. Solo se activan
         si las aceptas, y puedes retirar el consentimiento cuando quieras.
       </p>
+      <p>
+        Usamos <strong>Vercel Web Analytics</strong>, que mide páginas vistas y de dónde llega la
+        visita <strong>sin instalar ninguna cookie</strong> y sin construir un perfil tuyo ni
+        seguirte por otras webs. Aun así, solo lo activamos si aceptas las cookies opcionales.
+      </p>
 
       <h3>De terceros</h3>
       <p>

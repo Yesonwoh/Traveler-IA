@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "@/components/cookie-banner";
+import { AnalyticsConConsentimiento } from "@/components/analytics";
 import { SITE_URL } from "@/lib/site-url";
 
 const geistSans = Geist({
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         {children}
         <CookieBanner />
+        <AnalyticsConConsentimiento />
       </body>
     </html>
   );
