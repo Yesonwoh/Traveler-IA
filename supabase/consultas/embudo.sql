@@ -10,6 +10,34 @@
 
 
 -- ---------------------------------------------------------------------------
+-- 0. QUIÉN HA HECHO QUÉ: una fila por usuario, de más nuevo a más viejo
+-- ---------------------------------------------------------------------------
+-- Es la consulta del día a día mientras haya pocos usuarios: de un vistazo ves
+-- quién entró, si llegó a crear algo y si volvió. Cuando la lista no quepa en
+-- una pantalla, deja de servir y pasa a mandar la número 2.
+--
+-- Cómo leerla: "mensajes" a 0 significa que se registró y no llegó a hablar con
+-- la IA. "mensajes" a 1 significa que probó una vez y no siguió, que hoy es el
+-- punto donde se pierde la gente.
+select
+  p.created_at::date                        as se_registro,
+  coalesce(nullif(p.nombre, ''), '—')       as usuario,
+  p.subscription_status                     as plan,
+  (select count(*) from public.viajes v
+     where v.user_id = p.id)                as viajes,
+  (select count(*) from public.mensajes m
+     where m.user_id = p.id and not m.es_ia) as mensajes,
+  (select count(*) from public.favoritos f
+     where f.user_id = p.id)                as favoritos,
+  (select count(*) from public.reservas r
+     where r.user_id = p.id)                as reservas,
+  (select max(m.created_at)::date from public.mensajes m
+     where m.user_id = p.id and not m.es_ia) as ultimo_dia_activo
+from public.profiles p
+order by p.created_at desc;
+
+
+-- ---------------------------------------------------------------------------
 -- 1. EL NÚMERO DE LA SEMANA: registros por día, últimos 30 días
 -- ---------------------------------------------------------------------------
 select
