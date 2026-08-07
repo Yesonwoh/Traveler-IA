@@ -5,7 +5,7 @@ import { pruebaGratisPrompt } from "@/lib/ai/prompts";
 import { DIAS_PRUEBA, hayColumnasPrueba } from "@/lib/suscripcion/prueba";
 import { geocodeDireccion } from "@/lib/google/geocode";
 import { buscarFotoUnsplash } from "@/lib/unsplash";
-import { buscarFotosLugar } from "@/lib/google/places-photo";
+import { buscarFotosLugar, normalizarFotos } from "@/lib/google/places-photo";
 import { construirContextoUsuario } from "@/lib/preferencias";
 import { leerPerfil } from "@/lib/supabase/perfil";
 import type { MensajeDTO, RecomendacionDTO } from "@/lib/chat/tipos";
@@ -171,7 +171,7 @@ export async function procesarMensajeIA({
       lat: row.lat,
       lng: row.lng,
       countryCode: row.country_code,
-      fotosUrls: row.fotos_urls ?? [],
+      fotosUrls: normalizarFotos(row.fotos_urls),
     }));
   }
 

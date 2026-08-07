@@ -19,12 +19,19 @@
  * el código, luego la clave nueva, y solo entonces restringir la pública.
  */
 
-/** Para llamadas hechas desde el servidor, donde no hay referrer que valga. */
+/**
+ * Toda llamada a Google que no sea el SDK del mapa pasa por aquí.
+ *
+ * **La clave pública no sirve para la API de Places, ni siquiera desde el navegador.**
+ * Comprobado contra Google: una clave con restricción por dominio responde
+ * `REQUEST_DENIED — API keys with referer restrictions cannot be used with this API`.
+ * Por eso las fotos van por `/api/foto` en vez de apuntar a Google directamente: la clave
+ * de servidor no puede protegerse por dominio, así que no puede salir al navegador.
+ *
+ * La pública (`NEXT_PUBLIC_GOOGLE_PLACES_API_KEY`) se usa en un único sitio,
+ * `trip-map.tsx`, y solo para cargar el SDK del mapa. Ese sí acepta restricción por
+ * dominio, que es lo que la protege.
+ */
 export function claveGoogleServidor(): string | undefined {
   return process.env.GOOGLE_SERVER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-}
-
-/** Para URLs que acabará pidiendo el navegador, que sí manda referrer. */
-export function claveGooglePublica(): string | undefined {
-  return process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
 }

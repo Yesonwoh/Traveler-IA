@@ -3,6 +3,7 @@ import type { MensajeDTO } from "@/actions/chat";
 import { GuardadosProvider } from "@/components/guardados-provider";
 import { tieneProveedorReal, type TipoRecomendacion } from "@/lib/affiliates/links";
 import { ChatView } from "./chat-view";
+import { normalizarFotos } from "@/lib/google/places-photo";
 
 export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,7 +65,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
       lat: r.lat,
       lng: r.lng,
       countryCode: r.country_code,
-      fotosUrls: r.fotos_urls ?? [],
+      fotosUrls: normalizarFotos(r.fotos_urls),
       // se decide en el servidor: depende de variables de entorno que el cliente no ve
       tieneProveedor: tieneProveedorReal(r.tipo as TipoRecomendacion, r.country_code),
     })),

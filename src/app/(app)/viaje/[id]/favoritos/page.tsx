@@ -4,6 +4,7 @@ import type { RecomendacionDTO } from "@/actions/chat";
 import { GuardadosProvider } from "@/components/guardados-provider";
 import { tieneProveedorReal, type TipoRecomendacion } from "@/lib/affiliates/links";
 import { FavoritosView } from "./favoritos-view";
+import { normalizarFotos } from "@/lib/google/places-photo";
 
 /** Fila de `recomendaciones` unida al favorito, para poder pintar su tarjeta completa. */
 type RecomendacionUnida = {
@@ -76,7 +77,7 @@ export default async function FavoritosPage({ params }: { params: Promise<{ id: 
       lat: r.lat,
       lng: r.lng,
       countryCode: r.country_code,
-      fotosUrls: r.fotos_urls ?? [],
+      fotosUrls: normalizarFotos(r.fotos_urls),
       tieneProveedor: tieneProveedorReal(r.tipo as TipoRecomendacion, r.country_code),
     };
   }
