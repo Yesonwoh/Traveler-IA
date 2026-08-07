@@ -54,8 +54,13 @@ es compartida: hay que volver a añadirla con el valor de test.
 falsa, lo que prueba que `STRIPE_WEBHOOK_SECRET` llega a la función y la verificación
 funciona.
 
-**Pendiente de probar con dinero real:** un pago de verdad (puedes reembolsarlo desde
-Stripe al momento) y confirmar que `profiles.subscription_status` pasa a `premium`.
+**Verificado el 7 de agosto de 2026 con una suscripción real.** Comprobado en la base de
+datos: Stripe creó el cliente, el webhook llegó, `subscription_status` pasó a `premium`,
+`subscription_trial_end` quedó a 3 días exactos y `trial_used` a `true`, así que esa cuenta
+no puede repetir la prueba. La cadena entera funciona.
+
+**Ojo:** esa cuenta está dentro de la prueba, no ha pagado. Se le cobra al terminar si no se
+cancela antes.
 
 ### Nota: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` no se usa
 
@@ -276,13 +281,13 @@ El dominio `.vercel.app` no se puede quitar, pero con `metadataBase` apuntando a
 ## 8. Repaso final en producción
 
 - [ ] La portada carga y "Empezar viaje" lleva a registro
-- [ ] Registro con email y con Google
+- [x] Registro con email y con Google
 - [ ] Crear un viaje y ver que la IA responde
 - [ ] El mapa carga con sus pines
 - [ ] "Entradas" en un monumento lleva a la ficha de Tiqets con tu tracking
 - [ ] La pestaña Vuelos busca precios y aparece "Al aterrizar"
-- [ ] "Empezar gratis" abre el pago de Stripe y el resumen dice "3 días de prueba"
-- [ ] Tras terminar el checkout, el usuario aparece como Premium y `/premium` dice
+- [x] "Empezar gratis" abre el pago de Stripe y el resumen dice "3 días de prueba"
+- [x] Tras terminar el checkout, el usuario aparece como Premium y `/premium` dice
       "Quedan 3 días"
 - [ ] Con una cuenta que ya haya tenido suscripción, `/premium` **no** ofrece la prueba
 
