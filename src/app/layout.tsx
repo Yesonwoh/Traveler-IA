@@ -51,6 +51,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Sin esto, iOS abre el acceso directo de la pantalla de inicio dentro de
+  // Safari, con su barra de URL encima. Con esto va a pantalla completa.
+  appleWebApp: {
+    capable: true,
+    title: "Traveler IA",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
