@@ -31,8 +31,17 @@ const CSP_SOLO_AVISAR = true;
  *   Chrome aplica esa directiva también a la redirección que viene después.
  */
 const SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const GOOGLE = "https://maps.googleapis.com https://maps.gstatic.com";
 const STRIPE = "https://checkout.stripe.com https://billing.stripe.com";
+
+/**
+ * Google Maps no vive en un solo subdominio, y eso se vio en la primera ronda en modo
+ * aviso: la política decía `maps.googleapis.com` y el mapa pedía además
+ * `mapsresources-pa.googleapis.com` (de ahí saca el estilo propio del Map ID). Con la
+ * lista estrecha, el mapa habría salido con el estilo por defecto de Google.
+ */
+const GOOGLE_SCRIPTS = "https://maps.googleapis.com https://maps.gstatic.com";
+const GOOGLE_CONEXIONES =
+  "https://*.googleapis.com https://*.gstatic.com https://*.google.com";
 
 const csp = [
   "default-src 'self'",
@@ -40,14 +49,17 @@ const csp = [
   // TODAS las páginas de forma dinámica (lo dice el doc de Next): adiós al estático y
   // al caché de CDN en una app que es sobre todo móvil. Esta CSP corta los scripts
   // externos no autorizados, no los inline.
-  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${GOOGLE}${esDesarrollo ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${GOOGLE_SCRIPTS}${esDesarrollo ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   // Las fotos vienen de Places, Unsplash, Supabase Storage y los avatares de Google.
   // Se deja https: abierto a propósito: una imagen no ejecuta nada y la lista blanca
   // real serían ocho dominios que cambian solos.
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' ${SUPABASE} ${GOOGLE} https://*.google.com`,
+  // `data:` y `blob:` los necesita el propio mapa: su worker de etiquetas hace fetch
+  // contra data:image/png para pintar los nombres de calles y sitios. No abre ninguna
+  // vía de fuga —a un data: no se le puede mandar nada— pero sin esto no hay etiquetas.
+  `connect-src 'self' data: blob: ${SUPABASE} ${GOOGLE_CONEXIONES}`,
   "worker-src 'self' blob:",
   "frame-src 'self'",
   "media-src 'self'",
@@ -57,7 +69,10 @@ const csp = [
   `form-action 'self' ${STRIPE}`,
   // Clickjacking: nadie puede meter traveleria.app dentro de un iframe.
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
+  // `upgrade-insecure-requests` NO existe en una política de solo aviso: el navegador
+  // la descarta y escribe un error por cada carga de página, que acaba tapando las
+  // violaciones de verdad. Entra solo cuando la política bloquea.
+  ...(CSP_SOLO_AVISAR ? [] : ["upgrade-insecure-requests"]),
 ]
   .join("; ")
   .replace(/\s{2,}/g, " ");
