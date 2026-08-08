@@ -10,11 +10,15 @@ const esDesarrollo = process.env.NODE_ENV === "development";
  * porque una CSP mal calibrada en un sitio con usuarios entrando no da un error
  * pequeño: da una pantalla en blanco.
  *
- * Para pasar a bloquear de verdad, poner esto en `false` y desplegar. Antes hay que
- * abrir en producción la portada, un viaje con su mapa y la página de planes, y
- * comprobar que la consola no dice "Report Only" por ninguna parte.
+ * **Activada el 8 de agosto de 2026**, tras dos rondas en modo aviso sobre producción.
+ * La primera destapó dos bloqueos que habrían dejado el mapa sin su estilo propio y sin
+ * etiquetas (ver el commit que amplió `connect-src`); la segunda salió limpia.
+ *
+ * Si algún día hay que volver a `true`: eso NO arregla nada por sí solo, solo deja de
+ * bloquear. Sirve para diagnosticar, y hay que volver a `false` en cuanto se sepa qué
+ * directiva faltaba.
  */
-const CSP_SOLO_AVISAR = true;
+const CSP_SOLO_AVISAR = false;
 
 /**
  * De dónde carga cosas la app, de verdad.
