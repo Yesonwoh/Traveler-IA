@@ -39,7 +39,7 @@ export function RecommendationCard({
             {recomendacion.nombre}
           </p>
           {recomendacion.direccion && (
-            <p className="mt-0.5 flex items-start gap-1 text-xs text-stone-400">
+            <p className="mt-0.5 flex items-start gap-1 text-xs text-stone-500">
               <MapPin size={12} className="mt-0.5 shrink-0" />
               <span className="line-clamp-1">{recomendacion.direccion}</span>
             </p>

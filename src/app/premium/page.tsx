@@ -62,7 +62,7 @@ export default async function PremiumPage() {
           <h1 className="text-pretty text-4xl font-black leading-[1.05] tracking-tight text-stone-900 sm:text-5xl">
             {isPremium ? (
               diasDePrueba ? (
-                "Estás probando Pro"
+                "Estás probando Premium"
               ) : (
                 "Tu suscripción"
               )
@@ -86,8 +86,8 @@ export default async function PremiumPage() {
                 ? `Te ${diasDePrueba === 1 ? "queda 1 día" : `quedan ${diasDePrueba} días`}. El ${fechaLarga(finaliza)} empieza el cobro y, si cancelas antes, no pagas nada.`
                 : "Tienes Premium activo. Aquí ves qué incluye cada plan y puedes cancelar cuando quieras."
               : puedeProbar
-                ? `Traveler IA Pro te cierra el viaje hora por hora, con el presupuesto desglosado y la ruta ya optimizada. Si en ${DIAS_PRUEBA} días no te convence, cancelas y no pagas nada.`
-                : "Traveler IA Pro te cierra el viaje hora por hora, con el presupuesto desglosado y la ruta ya optimizada."}
+                ? `Premium te cierra el viaje hora por hora, con el presupuesto desglosado y la ruta ya optimizada. Si en ${DIAS_PRUEBA} días no te convence, cancelas y no pagas nada.`
+                : "Premium te cierra el viaje hora por hora, con el presupuesto desglosado y la ruta ya optimizada."}
           </p>
         </div>
 

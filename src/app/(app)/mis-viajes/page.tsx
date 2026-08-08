@@ -1,4 +1,6 @@
+import { Compass } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { EstadoVacio } from "@/components/estado-vacio";
 import { leerPerfil } from "@/lib/supabase/perfil";
 import { capitalizar } from "@/lib/utils";
 import { CrearViajeDialog } from "./crear-viaje-dialog";
@@ -56,8 +58,12 @@ export default async function MisViajesPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-10 rounded-2xl border border-dashed border-stone-300 py-16 text-center text-stone-400">
-          Todavía no tienes ningún viaje. Crea el primero arriba.
+        <div className="mt-10">
+          <EstadoVacio
+            icono={Compass}
+            titulo="Todavía no tienes ningún viaje"
+            texto="Empieza por “Nuevo viaje” ahí arriba: con el destino (o sin él) la IA te monta la primera propuesta."
+          />
         </div>
       )}
     </div>

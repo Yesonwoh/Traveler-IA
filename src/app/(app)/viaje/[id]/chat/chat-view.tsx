@@ -179,7 +179,7 @@ export function ChatView({
           )}
         >
           {mensajes.length === 0 && (
-            <div className="flex h-full items-center justify-center px-8 text-center text-sm text-stone-400">
+            <div className="flex h-full items-center justify-center px-8 text-center text-sm text-stone-500">
               Cuéntame a dónde quieres ir, desde dónde sales y tu presupuesto. Yo me encargo del
               resto. 🎒
             </div>
@@ -218,7 +218,7 @@ export function ChatView({
           ))}
 
           {isPending && (
-            <div className="flex items-center gap-2 text-sm text-stone-400">
+            <div className="flex items-center gap-2 text-sm text-stone-500">
               <Loader2 size={14} className="animate-spin" /> Traveler IA está pensando...
             </div>
           )}

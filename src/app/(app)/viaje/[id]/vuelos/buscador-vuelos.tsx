@@ -109,10 +109,13 @@ export function BuscadorVuelos({
 
 function Resultados({ resultado }: { resultado: ResultadoBusqueda }) {
   if (resultado.estado === "sin-credenciales") {
+    // Este caso es un fallo de configuración nuestro, no algo que el usuario pueda
+    // arreglar: enseñarle los nombres de dos variables de entorno solo le dice que
+    // la app está a medio montar. El detalle técnico se queda en el servidor.
     return (
       <Aviso>
-        La búsqueda de vuelos aún no está conectada. Falta añadir <code>TRAVELPAYOUT_API_KEY</code>{" "}
-        y <code>TRAVELPAYOUT_MARKER</code> en el entorno.
+        La búsqueda de vuelos no está disponible ahora mismo. Estamos en ello: vuelve a
+        intentarlo en un rato.
       </Aviso>
     );
   }

@@ -38,7 +38,7 @@ export function FavoritosView({
       // favoritos guardados a mano, sin recomendación detrás
       <div className="w-56 p-3">
         <p className="font-semibold text-stone-900">{p.nombre}</p>
-        {p.direccion && <p className="mt-1 text-xs text-stone-400">{p.direccion}</p>}
+        {p.direccion && <p className="mt-1 text-xs text-stone-500">{p.direccion}</p>}
       </div>
     );
   }

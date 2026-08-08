@@ -25,7 +25,7 @@ export function LoginForm({ next, oauthError }: { next: string; oauthError?: str
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-stone-400">
+      <div className="my-6 flex items-center gap-3 text-xs text-stone-500">
         <div className="h-px flex-1 bg-stone-200" />
         o con email
         <div className="h-px flex-1 bg-stone-200" />

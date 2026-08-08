@@ -41,7 +41,7 @@ export default function RegistroPage() {
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-stone-400">
+      <div className="my-6 flex items-center gap-3 text-xs text-stone-500">
         <div className="h-px flex-1 bg-stone-200" />
         o con email
         <div className="h-px flex-1 bg-stone-200" />
@@ -64,7 +64,7 @@ export default function RegistroPage() {
         </Button>
       </form>
 
-      <p className="mt-4 text-center text-xs leading-relaxed text-stone-400">
+      <p className="mt-4 text-center text-xs leading-relaxed text-stone-500">
         Al crear una cuenta aceptas nuestros{" "}
         <Link href="/terminos" className="underline underline-offset-2 hover:text-brand">
           Términos de servicio

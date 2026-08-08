@@ -82,7 +82,7 @@ export function UserMenu({
               onClick={cerrar}
             >
               <Sparkles size={15} />
-              Hazte premium
+              Hazte Premium
             </Link>
           )}
 

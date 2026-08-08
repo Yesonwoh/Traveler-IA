@@ -22,7 +22,7 @@ export function CookieResetButton() {
         {hecho ? "Preferencias restablecidas" : "Cambiar mis preferencias"}
       </Button>
       {hecho && (
-        <span className="text-sm text-stone-400">
+        <span className="text-sm text-stone-500">
           Vuelve a elegir en el aviso de la parte inferior.
         </span>
       )}

@@ -65,17 +65,17 @@ export default async function ConfiguracionPage() {
       </section>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-stone-400">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-stone-500">
           Perfil
         </h2>
         <PerfilForm nombre={profile?.nombre ?? ""} telefono={profile?.telefono ?? ""} />
       </section>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-stone-400">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-stone-500">
           Preferencias de viaje
         </h2>
-        <p className="mb-4 text-xs text-stone-400">
+        <p className="mb-4 text-xs text-stone-500">
           Opcional — ayuda a la IA a proponerte mejores planes desde el primer mensaje.
         </p>
         {/* Sin `key`: el propio formulario se resincroniza con estas props (ver
@@ -93,7 +93,7 @@ export default async function ConfiguracionPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-400">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
           Suscripción
         </h2>
         <SuscripcionCard
@@ -107,14 +107,14 @@ export default async function ConfiguracionPage() {
       </section>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-stone-400">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-stone-500">
           Cuenta
         </h2>
         <CuentaSection />
       </section>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-stone-400">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-stone-500">
           Legal
         </h2>
         <div className="divide-y divide-stone-100">

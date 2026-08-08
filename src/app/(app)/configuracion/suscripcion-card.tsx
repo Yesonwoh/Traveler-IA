@@ -47,7 +47,7 @@ export function SuscripcionCard({
               {finPrueba && ` · el ${finPrueba} empieza el cobro`}
             </p>
           ) : isPremium && renuevaEl ? (
-            <p className="mt-1 text-xs text-stone-400">
+            <p className="mt-1 text-xs text-stone-500">
               Se renueva el {new Date(renuevaEl).toLocaleDateString("es-ES")}
             </p>
           ) : (
@@ -73,7 +73,7 @@ export function SuscripcionCard({
               "inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
             )}
           >
-            {pruebaSinUsar ? "Probar gratis" : "Hazte premium"}
+            {pruebaSinUsar ? "Probar gratis" : "Hazte Premium"}
           </Link>
         )}
       </div>

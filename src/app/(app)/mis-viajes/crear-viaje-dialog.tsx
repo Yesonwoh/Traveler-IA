@@ -140,7 +140,7 @@ function FormularioViaje({
           <button
             onClick={() => !isPending && onClose()}
             aria-label="Cerrar"
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-stone-400 hover:bg-stone-100"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-stone-500 hover:bg-stone-100"
           >
             <X size={18} />
           </button>
@@ -155,7 +155,7 @@ function FormularioViaje({
                 placeholder="Ej: Lisboa, Japón, los Balcanes..."
                 autoFocus
               />
-              <p className="mt-1 text-xs text-stone-400">
+              <p className="mt-1 text-xs text-stone-500">
                 Déjalo vacío si quieres que la IA te proponga un chollo.
               </p>
             </Campo>
@@ -253,7 +253,7 @@ function FormularioViaje({
                   placeholder="Ej: 200"
                   className="pr-9"
                 />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-stone-500">
                   €
                 </span>
               </div>
@@ -312,7 +312,7 @@ function FormularioViaje({
               )}
             </Button>
             {isPending && (
-              <p className="mt-2 text-center text-xs text-stone-400">
+              <p className="mt-2 text-center text-xs text-stone-500">
                 Buscando destino, precios y sitios concretos. Tarda unos segundos.
               </p>
             )}
@@ -336,7 +336,7 @@ function Campo({
     <div>
       <label className="mb-1.5 block text-sm font-semibold text-stone-700">
         {label}
-        {opcional && <span className="ml-1.5 font-normal text-stone-400">(opcional)</span>}
+        {opcional && <span className="ml-1.5 font-normal text-stone-500">(opcional)</span>}
       </label>
       {children}
     </div>

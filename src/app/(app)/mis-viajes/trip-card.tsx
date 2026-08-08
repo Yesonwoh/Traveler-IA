@@ -48,7 +48,8 @@ export function TripCard({
       </Link>
 
       <button
-        aria-label="Marcar como favorito"
+        aria-label={favorito ? `Quitar ${nombre} de favoritos` : `Marcar ${nombre} como favorito`}
+        aria-pressed={favorito}
         onClick={() => {
           setFavorito((v) => !v);
           startTransition(() => toggleFavoritoViaje(id, favorito));
@@ -60,7 +61,7 @@ export function TripCard({
       </button>
 
       <button
-        aria-label="Eliminar viaje"
+        aria-label={`Eliminar el viaje ${nombre}`}
         onClick={() => {
           if (confirm(`¿Eliminar "${nombre}"? No se puede deshacer.`)) {
             startTransition(() => eliminarViaje(id));

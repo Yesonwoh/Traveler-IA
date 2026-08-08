@@ -33,7 +33,7 @@ export function MapSheet({
           <button
             onClick={onClose}
             aria-label="Cerrar mapa"
-            className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-stone-400 hover:bg-stone-100"
+            className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-stone-500 hover:bg-stone-100"
           >
             <X size={18} />
           </button>

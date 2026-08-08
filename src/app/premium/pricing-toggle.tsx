@@ -85,7 +85,7 @@ export function PricingToggle({
         <div className="relative order-2 rounded-3xl border border-stone-200 bg-white p-7 sm:order-1">
           {!isPremium && <Etiqueta tono="claro">Tu plan actual</Etiqueta>}
 
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-stone-400">Free</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-stone-500">Free</p>
           <p className="mt-3 text-4xl font-black tracking-tight text-stone-900">0€</p>
           <p className="mt-1 text-sm text-stone-500">Para siempre, sin tarjeta</p>
 

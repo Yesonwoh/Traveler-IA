@@ -61,7 +61,7 @@ export function FlightTeaser({
 
   if (estado === "cargando") {
     return (
-      <p className="mt-3 flex items-center gap-2 text-xs text-stone-400">
+      <p className="mt-3 flex items-center gap-2 text-xs text-stone-500">
         <Loader2 size={13} className="animate-spin" /> Buscando precios de vuelo...
       </p>
     );

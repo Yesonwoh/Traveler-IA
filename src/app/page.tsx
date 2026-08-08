@@ -74,7 +74,7 @@ export default async function Home() {
 
             <AppPreview />
 
-            <p className="mt-4 text-center text-xs text-stone-400">
+            <p className="mt-4 text-center text-xs text-stone-500">
               Conversación de ejemplo. Cada viaje genera la suya con tus fechas y tu presupuesto.
             </p>
           </div>

@@ -91,7 +91,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 input[type="date"]::-webkit-datetime-edit-day-field:not([aria-valuenow]),
 input[type="date"]::-webkit-datetime-edit-month-field:not([aria-valuenow]),
 input[type="date"]::-webkit-datetime-edit-year-field:not([aria-valuenow]) {
-  color: #a8a29e;
+  /* stone-500, el mismo gris que `placeholder:text-stone-500` del resto de campos:
+     stone-400 se quedaba en 2,5:1 y un placeholder también hay que poder leerlo. */
+  color: #78716c;
 }
 
 /* Quita el padding/relleno por defecto del InfoWindow de Google Maps para que

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Car, ExternalLink, Luggage } from "lucide-react";
+import { Car, ExternalLink, Luggage, Plane } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { EstadoVacio } from "@/components/estado-vacio";
 import { linkTrasladoAeropuerto, linkConsignaEquipaje } from "@/lib/affiliates/links";
 import { ReservaItem, type ReservaDTO } from "@/components/reserva-item";
 import { BuscadorVuelos } from "./buscador-vuelos";
@@ -62,7 +63,7 @@ export default async function VuelosPage({ params }: { params: Promise<{ id: str
           "Reservar" colgado de un aeropuerto no significaba nada. */}
       {(trasladoUrl || consignaUrl) && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
             Al aterrizar
           </h2>
 
@@ -87,14 +88,15 @@ export default async function VuelosPage({ params }: { params: Promise<{ id: str
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-400">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
           Vuelos guardados
         </h2>
         {vuelos.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-400">
-            Todavía no has guardado ningún vuelo. Busca arriba tu ruta y pulsa
-            &quot;Continuar&quot; en la tarifa que te encaje.
-          </div>
+          <EstadoVacio
+            icono={Plane}
+            titulo="Aquí van los vuelos que te guardes"
+            texto="Busca tu ruta ahí arriba y pulsa “Continuar” en la tarifa que te encaje. Se queda guardada en el viaje."
+          />
         ) : (
           <div className="space-y-2">
             {vuelos.map((r) => (

@@ -60,7 +60,12 @@ export async function buscarVuelos(params: {
   viajeros?: number;
 }): Promise<ResultadoVuelos> {
   const token = process.env.TRAVELPAYOUT_API_KEY;
-  if (!token) return { estado: "sin-credenciales", vuelos: [] };
+  if (!token) {
+    // El usuario ya no ve el nombre de la variable (ver buscador-vuelos.tsx), así que
+    // el motivo tiene que quedar en algún sitio: si no, la pestaña Vuelos falla en mudo.
+    console.error("[vuelos] falta TRAVELPAYOUT_API_KEY: la búsqueda queda desactivada");
+    return { estado: "sin-credenciales", vuelos: [] };
+  }
 
   const moneda = params.moneda ?? "eur";
 

@@ -63,7 +63,7 @@ export function ReservaItem({ reserva, viajeId }: { reserva: ReservaDTO; viajeId
             href={reserva.urlAfiliado}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-brand"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 hover:text-brand"
             aria-label="Abrir enlace de reserva"
           >
             <ExternalLink size={16} />
@@ -76,7 +76,7 @@ export function ReservaItem({ reserva, viajeId }: { reserva: ReservaDTO; viajeId
               setEstado("reservado");
               startTransition(() => marcarComoReservado(reserva.id, viajeId));
             }}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-stone-400 hover:bg-emerald-50 hover:text-emerald-600"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-stone-500 hover:bg-emerald-50 hover:text-emerald-600"
             aria-label="Marcar como reservado"
           >
             <Check size={16} />
@@ -85,7 +85,7 @@ export function ReservaItem({ reserva, viajeId }: { reserva: ReservaDTO; viajeId
         <button
           disabled={isPending}
           onClick={() => startTransition(() => eliminarReserva(reserva.id, viajeId))}
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-stone-400 hover:bg-red-50 hover:text-red-600"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-stone-500 hover:bg-red-50 hover:text-red-600"
           aria-label="Eliminar"
         >
           <Trash2 size={16} />

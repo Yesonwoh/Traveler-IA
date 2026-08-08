@@ -24,13 +24,13 @@ export function SiteFooter() {
           ))}
         </nav>
 
-        <p className="max-w-2xl text-xs leading-relaxed text-stone-400">
+        <p className="max-w-2xl text-xs leading-relaxed text-stone-500">
           Traveler IA puede incluir enlaces de afiliado. Si reservas a través de ellos podemos
           recibir una comisión sin coste adicional para ti. Los precios y la disponibilidad los
           fija cada proveedor y pueden cambiar.
         </p>
 
-        <p className="text-xs text-stone-400">
+        <p className="text-xs text-stone-500">
           © {new Date().getFullYear()} Traveler IA — Yeseong Oh. Todos los derechos reservados.
         </p>
       </div>

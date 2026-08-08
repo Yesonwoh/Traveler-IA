@@ -38,7 +38,7 @@ export function FlightCard({
         <div className="px-3 pb-1 pt-2">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-stone-900">
             {vuelo.origenIata}
-            <Plane size={13} className="shrink-0 text-stone-400" />
+            <Plane size={13} className="shrink-0 text-stone-500" />
             {vuelo.destinoIata}
           </p>
           <p className="mt-0.5 text-xs text-stone-500">
@@ -123,7 +123,7 @@ function Tramo({
           <span className="truncate text-[11px] text-stone-500">{aerolinea}</span>
         </span>
         {numeroVuelo && (
-          <span className="shrink-0 text-[11px] text-stone-400">{numeroVuelo}</span>
+          <span className="shrink-0 text-[11px] text-stone-500">{numeroVuelo}</span>
         )}
       </div>
       <div className="mt-1 flex items-baseline justify-between">
@@ -131,7 +131,7 @@ function Tramo({
         <span className="flex flex-col items-center">
           <span className="text-sm font-semibold text-stone-700">{formatearHora(hora)}</span>
           {duracionMin ? (
-            <span className="text-[10px] leading-none text-stone-400">
+            <span className="text-[10px] leading-none text-stone-500">
               {formatearDuracion(duracionMin)}
             </span>
           ) : null}

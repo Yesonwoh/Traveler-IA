@@ -37,7 +37,7 @@ export function PinDetailCard({
         </span>
         <p className="mt-1.5 text-lg font-bold text-stone-900">{recomendacion.nombre}</p>
         {recomendacion.direccion && (
-          <p className="mt-0.5 flex items-start gap-1 text-xs text-stone-400">
+          <p className="mt-0.5 flex items-start gap-1 text-xs text-stone-500">
             <MapPin size={12} className="mt-0.5 shrink-0" />
             {recomendacion.direccion}
           </p>

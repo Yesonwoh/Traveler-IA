@@ -37,7 +37,7 @@ export function AvatarUpload({
       </label>
       <div className="text-sm">
         <p className="font-medium text-stone-700">Foto de perfil</p>
-        <p className="text-stone-400">{isPending ? "Subiendo..." : "Haz clic para cambiarla"}</p>
+        <p className="text-stone-500">{isPending ? "Subiendo..." : "Haz clic para cambiarla"}</p>
         {state.error && <p className="text-red-600">{state.error}</p>}
       </div>
     </form>

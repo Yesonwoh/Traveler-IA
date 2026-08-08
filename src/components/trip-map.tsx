@@ -169,7 +169,9 @@ function MapaVacio() {
         <MapPinned size={24} strokeWidth={2} className="text-brand-dark" aria-hidden />
       </div>
       <p className="text-base font-bold text-stone-700">Aquí van a caer tus sitios</p>
-      <p className="max-w-[15rem] text-pretty text-sm leading-relaxed text-stone-500">
+      {/* stone-600: el fondo de este bloque es stone-100 y stone-500 sobre él se
+          queda en 4,43:1, por debajo del mínimo. */}
+      <p className="max-w-[15rem] text-pretty text-sm leading-relaxed text-stone-600">
         Cuéntale a la IA a dónde quieres ir y cada sitio que te proponga aparece marcado
         aquí.
       </p>
@@ -197,9 +199,14 @@ export function TripMap({
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (!apiKey) {
+    // Igual que en el buscador de vuelos: al usuario no le sirve de nada el nombre de
+    // una variable de entorno, y a nosotros sí. El motivo va a la consola.
+    console.error("[mapa] falta NEXT_PUBLIC_GOOGLE_PLACES_API_KEY: el mapa no se monta");
     return (
-      <div className="flex h-full w-full items-center justify-center bg-stone-100 text-sm text-stone-400">
-        Falta la API key de Google Maps.
+      /* stone-600 y no stone-500: el fondo aquí es stone-100, y sobre él el gris
+         medio se queda en 4,43:1, justo por debajo del mínimo. */
+      <div className="flex h-full w-full items-center justify-center bg-stone-100 px-8 text-center text-sm text-stone-600">
+        El mapa no está disponible ahora mismo. Tus sitios siguen guardados.
       </div>
     );
   }
@@ -272,7 +279,7 @@ export function TripMap({
                   <div className="w-56 p-1">
                     <p className="font-semibold text-stone-900">{hovered.nombre}</p>
                     {hovered.direccion && (
-                      <p className="mt-1 text-xs text-stone-400">{hovered.direccion}</p>
+                      <p className="mt-1 text-xs text-stone-500">{hovered.direccion}</p>
                     )}
                   </div>
                 )}

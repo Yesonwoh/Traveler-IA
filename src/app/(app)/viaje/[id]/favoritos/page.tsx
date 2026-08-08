@@ -1,4 +1,6 @@
+import { Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { EstadoVacio } from "@/components/estado-vacio";
 import type { PuntoMapa } from "@/components/trip-map";
 import type { RecomendacionDTO } from "@/actions/chat";
 import { GuardadosProvider } from "@/components/guardados-provider";
@@ -38,10 +40,12 @@ export default async function FavoritosPage({ params }: { params: Promise<{ id: 
   if (favoritos.length === 0) {
     return (
       <div className="p-4 sm:p-6">
-        <div className="rounded-2xl border border-dashed border-stone-300 py-16 text-center text-stone-400">
-          Todavía no tienes favoritos. Pulsa &quot;Guardar&quot; en una recomendación del chat
-          para marcarla.
-        </div>
+        <EstadoVacio
+          icono={Star}
+          titulo="Aquí van tus sitios guardados"
+          texto="Pulsa “Guardar” en cualquier recomendación del chat y aparece aquí, con su punto en el mapa."
+          accion={{ href: `/viaje/${id}/chat`, label: "Ir al chat" }}
+        />
       </div>
     );
   }
