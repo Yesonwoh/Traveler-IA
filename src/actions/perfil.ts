@@ -2,11 +2,67 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe/client";
+import {
+  INTERESES,
+  VALORES_ALOJAMIENTO,
+  VALORES_PRESUPUESTO,
+  VALORES_RITMO,
+} from "@/lib/preferencias";
 
 export type PerfilState = { error: string | null; success?: boolean };
+
+/**
+ * Lo que el servidor acepta de Configuración, campo a campo.
+ *
+ * Este formulario era el único que llegaba a la base de datos sin pasar por un
+ * esquema: cogía lo que viniera en el FormData, le hacía `trim()` y lo guardaba. El
+ * navegador limita longitudes y ofrece desplegables, pero una Server Action se puede
+ * llamar directamente, así que ninguna de esas dos cosas es una defensa.
+ *
+ * Importa por dos motivos distintos:
+ *  - `ubicacion` y `notas_viaje` acaban DENTRO del contexto que lee la IA, así que sin
+ *    tope de longitud cada mensaje de esa persona costaría más dinero.
+ *  - los cuatro desplegables tienen valores conocidos; cualquier otra cosa es texto
+ *    inventado que la app luego no sabe traducir a etiqueta y se muestra en blanco.
+ *
+ * `viajes.ts` ya usaba este mismo patrón con `BriefingSchema`.
+ */
+const OPCIONES_INTERES = new Set<string>(INTERESES);
+
+const opcional = (valores: readonly string[]) =>
+  z
+    .string()
+    .trim()
+    .max(40)
+    .refine((v) => v === "" || valores.includes(v), "opción no reconocida")
+    .transform((v) => v || null);
+
+const PerfilSchema = z.object({
+  nombre: z.string().trim().max(80).optional(),
+  telefono: z.string().trim().max(30).optional(),
+  ubicacion: z.string().trim().max(120).transform((v) => v || null).optional(),
+  // el navegador manda "" cuando el campo de fecha está vacío
+  fecha_nacimiento: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v), "fecha no válida")
+    .transform((v) => v || null)
+    .optional(),
+  intereses: z
+    .array(z.string().trim())
+    // se descarta lo que no esté en el catálogo en vez de rechazar el formulario
+    // entero: así un chip retirado del catálogo no bloquea el guardado.
+    .transform((lista) => lista.filter((i) => OPCIONES_INTERES.has(i)).slice(0, INTERESES.length))
+    .optional(),
+  presupuesto_estilo: opcional(VALORES_PRESUPUESTO).optional(),
+  tipo_alojamiento: opcional(VALORES_ALOJAMIENTO).optional(),
+  ritmo_viaje: opcional(VALORES_RITMO).optional(),
+  notas_viaje: z.string().trim().max(600).transform((v) => v || null).optional(),
+});
 
 /** Actualiza solo los campos presentes en el FormData (para poder tener varios formularios parciales). */
 export async function actualizarPerfil(
@@ -19,22 +75,35 @@ export async function actualizarPerfil(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sesión no válida." };
 
-  const updates: Record<string, string | string[] | null> = {};
-  if (formData.has("nombre")) updates.nombre = String(formData.get("nombre") ?? "").trim();
-  if (formData.has("telefono")) updates.telefono = String(formData.get("telefono") ?? "").trim();
-  if (formData.has("ubicacion")) {
-    updates.ubicacion = String(formData.get("ubicacion") ?? "").trim() || null;
-  }
-  if (formData.has("fecha_nacimiento")) {
-    updates.fecha_nacimiento = String(formData.get("fecha_nacimiento") ?? "").trim() || null;
+  // Solo se recogen los campos presentes: hay varios formularios parciales y cada uno
+  // manda los suyos. Lo que no viene no se toca.
+  const crudo: Record<string, unknown> = {};
+  for (const campo of [
+    "nombre",
+    "telefono",
+    "ubicacion",
+    "fecha_nacimiento",
+    "presupuesto_estilo",
+    "tipo_alojamiento",
+    "ritmo_viaje",
+    "notas_viaje",
+  ]) {
+    if (formData.has(campo)) crudo[campo] = String(formData.get(campo) ?? "");
   }
   // los chips van como inputs hidden: sin marcador no se distinguiría "ninguno" de "no enviado"
   if (formData.has("intereses_form")) {
-    updates.intereses = formData.getAll("intereses").map((i) => String(i).trim()).filter(Boolean);
+    crudo.intereses = formData.getAll("intereses").map((i) => String(i));
   }
-  for (const campo of ["presupuesto_estilo", "tipo_alojamiento", "ritmo_viaje", "notas_viaje"]) {
-    if (formData.has(campo)) updates[campo] = String(formData.get(campo) ?? "").trim() || null;
-  }
+
+  const parsed = PerfilSchema.safeParse(crudo);
+  if (!parsed.success) return { error: "Revisa los datos: hay algún campo que no cuadra." };
+
+  // Fuera las claves sin valor, para no mandarle a Supabase un `undefined` que no
+  // significa nada. Si no queda ninguna, no hay nada que guardar.
+  const updates = Object.fromEntries(
+    Object.entries(parsed.data).filter(([, valor]) => valor !== undefined)
+  );
+  if (Object.keys(updates).length === 0) return { error: null, success: true };
 
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
   if (error) return { error: "No se pudo guardar." };
@@ -43,10 +112,26 @@ export async function actualizarPerfil(
   return { error: null, success: true };
 }
 
+/**
+ * Formatos aceptados para el avatar, y la extensión con la que se guarda cada uno.
+ *
+ * Antes bastaba con que el tipo empezara por `image/` y la extensión salía del nombre
+ * del fichero. Dos problemas: el tipo lo declara el navegador y se puede falsear, y de
+ * un nombre como `foto.svg` salía un SVG guardado en un bucket **público** — y un SVG
+ * es un documento que puede llevar `<script>` dentro. Ahora la extensión la decide el
+ * servidor a partir de una lista, nunca el nombre que venga.
+ */
+const FORMATOS_AVATAR: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 export async function subirAvatar(_prev: PerfilState, formData: FormData): Promise<PerfilState> {
   const file = formData.get("avatar") as File | null;
   if (!file || file.size === 0) return { error: "Elige una imagen." };
-  if (!file.type.startsWith("image/")) return { error: "El archivo debe ser una imagen." };
+  const extension = FORMATOS_AVATAR[file.type];
+  if (!extension) return { error: "La foto tiene que ser JPG, PNG o WebP." };
   if (file.size > 4 * 1024 * 1024) return { error: "La imagen no puede pesar más de 4MB." };
 
   const supabase = await createClient();
@@ -55,12 +140,12 @@ export async function subirAvatar(_prev: PerfilState, formData: FormData): Promi
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sesión no válida." };
 
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${user.id}/avatar.${ext}`;
+  const path = `${user.id}/avatar.${extension}`;
 
   const { error: uploadError } = await supabase.storage
     .from("avatars")
-    .upload(path, file, { upsert: true, cacheControl: "3600" });
+    // `contentType` explícito: sin él, Supabase se cree la cabecera del fichero subido
+    .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
   if (uploadError) return { error: "No se pudo subir la imagen." };
 
   const { data: publicUrl } = supabase.storage.from("avatars").getPublicUrl(path);

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { topeDeViajes } from "@/lib/limites";
 import { procesarMensajeIA, ponerFotoPortada } from "@/lib/chat/responder";
 import { generarTituloViaje } from "@/lib/ai/travelerAI";
 import { BRIEFING_SYSTEM_PROMPT } from "@/lib/ai/prompts";
@@ -192,6 +193,9 @@ export async function crearViajeDesdeIdea(texto: string): Promise<ViajeState> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const tope = await topeDeViajes(supabase, user.id);
+  if (!tope.ok) return { error: tope.error };
+
   const idea = parsed.data;
   const viaje = await insertarViaje(supabase, user.id, "Viaje nuevo", BriefingSchema.parse({}));
   if (!viaje) return { error: "No se pudo crear el viaje." };
@@ -214,6 +218,11 @@ export async function crearViajeGuiado(datos: BriefingViaje): Promise<ViajeState
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  // Antes que nada: crear un viaje dispara propuesta de la IA, título y foto de
+  // portada. Es la operación más cara de la app y era la única sin freno.
+  const tope = await topeDeViajes(supabase, user.id);
+  if (!tope.ok) return { error: tope.error };
 
   const nombreProvisional = parsed.data.destino || "Viaje sorpresa";
 

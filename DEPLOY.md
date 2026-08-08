@@ -295,22 +295,36 @@ El dominio `.vercel.app` no se puede quitar, pero con `metadataBase` apuntando a
 
 ## Base de datos
 
-Las migraciones `0009_evitar_duplicados.sql` y `0010_nombre_en_recomendaciones.sql` ya están
-aplicadas.
+**Todas las migraciones hasta la `0013` están aplicadas.** No hay ninguna pendiente.
 
-### Pendiente: `0011_prueba_gratis.sql` (prueba de 3 días)
+| Migración | Qué hizo | Aplicada |
+|---|---|---|
+| `0009`–`0010` | Duplicados y nombre en recomendaciones | sí |
+| `0011_prueba_gratis` | Columnas de la prueba de 3 días | 6 ago 2026 |
+| `0012_blindar_suscripcion` | Privilegios por columna en `profiles` + índice de mensajes | 8 ago 2026 |
+| `0013_indice_viajes_por_usuario` | Índice para el tope de creación de viajes | 8 ago 2026 |
 
-- [ ] Supabase → *SQL Editor* → pegar y ejecutar
-      `supabase/migrations/0011_prueba_gratis.sql`
-- [ ] Redesplegar (o reiniciar el servidor) para que el código detecte las columnas nuevas
+Cualquier migración futura, igual: a mano contra Supabase, en *SQL Editor*.
 
-Este orden **no es crítico**: el código está escrito para funcionar antes y después. Sin la
-migración, la prueba se sigue concediendo (quien decide es Stripe) y el webhook reintenta el
-guardado sin las columnas nuevas; lo único que no pasa es que la IA la mencione en el chat,
-porque sin `trial_used` no hay forma de saber quién ya la gastó y prefiere callarse antes
-que ofrecérsela dos veces a la misma persona.
+**Dos cosas que se olvidan y cuestan un rato de depuración:**
 
-La detección de columnas se cachea **una vez por proceso** (igual que `hayNombreEn`): tras
-aplicar la migración hace falta un arranque nuevo del servidor, no basta con recargar.
+- La detección de columnas opcionales se cachea **una vez por proceso** (`hayNombreEn` y
+  compañía). Tras una migración que añada columnas hace falta un arranque nuevo del
+  servidor: recargar la página no basta.
+- Una migración que solo crea índices (como la `0013`) no cambia el comportamiento, solo
+  el coste. Si se olvida, nada falla — simplemente se escanea de más.
 
-Cualquier migración futura, igual: a mano contra Supabase.
+### Comprobar que la `0012` sigue en pie
+
+Es la única con consecuencias de seguridad. En *SQL Editor*:
+
+```sql
+select string_agg(column_name, ', ' order by column_name) as escribibles
+from information_schema.column_privileges
+where grantee = 'authenticated'
+  and table_name = 'profiles'
+  and privilege_type = 'UPDATE';
+```
+
+Deben salir 13 columnas y **no** deben aparecer `subscription_status`, `trial_used` ni
+`stripe_customer_id`. Si aparecen, cualquiera puede regalarse Premium.
