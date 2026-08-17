@@ -42,16 +42,26 @@ type Programa = {
   /** URL de búsqueda del proveedor. */
   busqueda: (t: Terminos) => string;
   /**
-   * Cómo se atribuye la comisión, según lo que use cada programa:
-   * - `tracking`: parámetros que se pegan a la URL (Tiqets, Klook, WeGoTrip, Kiwitaxi).
-   * - `redirect`: plantilla de un redirector que genera su propio id de clic
-   *   (KKday vía Involve Asia, Go City vía Partnerize). Usa {url} para el destino
-   *   codificado y {url_raw} para el destino tal cual.
+   * Plantilla de un redirector propio del programa, cuando no vale el del panel
+   * (KKday vía Involve Asia, Go City vía Partnerize). Usa {url} para el destino
+   * codificado y {url_raw} para el destino tal cual.
+   */
+  redirect?: string;
+  /**
+   * Enlace del panel de Travelpayouts (algo.tpx.gr/XXXX). Es el camino BUENO y el que
+   * se usa siempre que existe: acepta `?u=<destino codificado>` y, además de llevar
+   * al sitio, genera un id de clic NUEVO en cada visita.
+   */
+  enlaceCorto?: string;
+  /**
+   * Parámetros de atribución pegados a la URL. Último recurso, y ojo con él: el id de
+   * clic que lleva dentro es el que se copió una vez del panel, así que TODAS las
+   * visitas van marcadas con el mismo. Se comprobó llamando dos veces a cada enlace
+   * del panel: cada llamada devuelve un id distinto (tq_click_id en Tiqets, sub_id en
+   * WeGoTrip, tpo en Kiwitaxi, track_id en RadicalStorage), mientras que el nuestro
+   * estaba congelado. Solo se usa si el programa no tiene enlace del panel.
    */
   tracking?: string;
-  redirect?: string;
-  /** Enlace corto del panel: respaldo si no hay nada configurado. */
-  enlaceCorto?: string;
 };
 
 /**
@@ -65,27 +75,8 @@ const PROGRAMAS: Record<ProgramaTercero, Programa> = {
     tracking: process.env.TP_TIQETS_TRACKING,
     enlaceCorto: process.env.TP_TIQETS_LINK,
   },
-  /**
-   * Klook va por el redirector y NO pegando parámetros a la URL de búsqueda, por dos
-   * motivos comprobados:
-   *
-   * 1. Atribución. Con los parámetros pegados a mano la URL final no lleva
-   *    `aff_klick_id`; pasando por el enlace corto sí, y además distinto en cada clic.
-   *    Ese id es el que identifica la visita, así que los enlaces de antes podían no
-   *    estar contando nada.
-   * 2. Klook está detrás de DataDome (`x-datadome: protected`). Aterrizar directamente
-   *    en una URL de resultados de búsqueda con parámetros de afiliado pegados es el
-   *    patrón que su antibot vigila; `affiliate.klook.com/redirect`, al que lleva el
-   *    enlace corto, es su propia puerta de entrada para este tráfico.
-   *
-   * El enlace corto del panel acepta `?u=` con el destino codificado. Si algún día otro
-   * programa da problemas parecidos, el mecanismo es el mismo.
-   */
   klook: {
     busqueda: ({ lugar }) => `https://www.klook.com/es/search/?query=${lugar}`,
-    redirect: process.env.TP_KLOOK_LINK ? `${process.env.TP_KLOOK_LINK}?u={url}` : undefined,
-    // se conserva como red de seguridad: si un día falta el enlace corto, el enlace
-    // sigue saliendo con la atribución vieja en vez de quedarse sin nada
     tracking: process.env.TP_KLOOK_TRACKING,
     enlaceCorto: process.env.TP_KLOOK_LINK,
   },
@@ -324,7 +315,7 @@ export function construirLinkAfiliado(params: {
       // Del sitio concreto a su página en Tiqets: la atracción si existe, si no un
       // producto de esa ciudad, y como último recurso la ciudad. Ya no hay buscador.
       const destino = urlTiqetsPara({ nombre, nombreEn, ciudad });
-      return destino ? conTracking(PROGRAMAS.tiqets, destino, true) : null;
+      return destino ? conTracking(PROGRAMAS.tiqets, destino) : null;
     }
 
     case "klook":
@@ -359,21 +350,37 @@ function linkPrograma(programa: Programa, terminos: Terminos): string {
   return conTracking(programa, programa.busqueda(terminos));
 }
 
-/** Pega la atribución del programa a una URL de destino ya resuelta. */
-function conTracking(programa: Programa, destino: string, preferirDestino = false): string {
+/**
+ * Envuelve una URL de destino con la atribución del programa, del mejor mecanismo al
+ * peor.
+ *
+ * El orden importa y no es cosmético. Antes se prefería `tracking` —pegar los
+ * parámetros del panel a la URL— y eso mandaba a todo el mundo con el MISMO id de
+ * clic, el que se copió una vez. Pasando por el enlace del panel, cada visita recibe
+ * el suyo, que es lo que la red usa para atribuir la comisión.
+ *
+ * Ya no hace falta elegir entre "conservar el destino" y "atribuir bien": `?u=` hace
+ * las dos cosas, así que hasta la ficha concreta de un producto sobrevive al rodeo.
+ */
+function conTracking(programa: Programa, destino: string): string {
+  // 1. Redirector propio del programa, cuando el del panel no sirve
   if (programa.redirect) {
     return programa.redirect
       .replace("{url}", encodeURIComponent(destino))
       .replace("{url_raw}", destino);
   }
 
+  // 2. Enlace del panel con el destino a cuestas: el camino normal
+  if (programa.enlaceCorto) {
+    const separador = programa.enlaceCorto.includes("?") ? "&" : "?";
+    return `${programa.enlaceCorto}${separador}u=${encodeURIComponent(destino)}`;
+  }
+
+  // 3. Parámetros pegados: solo si el programa no tiene enlace del panel
   if (programa.tracking) {
     const separador = destino.includes("?") ? "&" : "?";
     return `${destino}${separador}${programa.tracking}`;
   }
 
-  // con un destino concreto (la ficha de un producto) no queremos caer al enlace
-  // corto genérico del panel: perderíamos justo el sitio al que íbamos
-  if (preferirDestino) return destino;
-  return programa.enlaceCorto ?? destino;
+  return destino;
 }
