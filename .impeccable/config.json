@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/components/reserva-item.tsx"
+        ],
+        "createdAt": "2026-08-17T17:15:21.108Z",
+        "reason": "Falso positivo: text-stone-500 es el reposo sobre blanco; el hover cambia fondo y texto a la vez (hover:bg-emerald-50 + hover:text-emerald-600, hover:bg-red-50 + hover:text-red-600), asi que el gris nunca cae sobre color."
+      }
+    ]
+  }
+}

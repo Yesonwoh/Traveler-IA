@@ -27,11 +27,14 @@ export default async function VuelosPage({ params }: { params: Promise<{ id: str
     .eq("id", id)
     .single<DatosViaje>();
 
+  // Se ordenan por fecha de salida y no por cuándo se guardaron: quien tiene tres
+  // tarifas apuntadas quiere verlas en el orden en que se vuela.
   const { data } = await supabase
     .from("reservas")
-    .select("id, tipo, nombre, proveedor, url_afiliado, estado")
+    .select("id, tipo, nombre, proveedor, url_afiliado, estado, fecha, precio_estimado")
     .eq("viaje_id", id)
     .eq("tipo", "vuelo")
+    .order("fecha", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
 
   const vuelos: ReservaDTO[] = (data ?? []).map((r) => ({
@@ -41,6 +44,7 @@ export default async function VuelosPage({ params }: { params: Promise<{ id: str
     proveedor: r.proveedor,
     urlAfiliado: r.url_afiliado,
     estado: r.estado,
+    detalle: detalleDelVuelo(r.fecha, r.precio_estimado),
   }));
 
   // Kiwitaxi vive aquí y no colgando de una tarjeta de aeropuerto en el chat
@@ -107,6 +111,46 @@ export default async function VuelosPage({ params }: { params: Promise<{ id: str
       </section>
     </div>
   );
+}
+
+/**
+ * "sáb 24 oct · desde 38 €" — la línea que distingue dos tarifas guardadas de la misma
+ * ruta.
+ *
+ * Solo el día, sin hora, y a propósito: Travelpayouts da la salida en hora local del
+ * aeropuerto de origen sin marcar siempre el desfase, así que enseñar una hora concreta
+ * sería enseñar una hora que puede estar equivocada. Se fuerza UTC para leer el día
+ * porque el servidor va en UTC y la conversión local lo movería de día en los vuelos de
+ * madrugada. Ver el comentario de `guardarVuelo` en actions/reservas.ts.
+ */
+function detalleDelVuelo(fecha: string | null, precio: number | null): string | null {
+  const partes: string[] = [];
+
+  if (fecha) {
+    const dia = new Date(fecha);
+    if (!Number.isNaN(dia.getTime())) {
+      partes.push(
+        dia.toLocaleDateString("es-ES", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          timeZone: "UTC",
+        })
+      );
+    }
+  }
+
+  if (precio != null) {
+    partes.push(
+      `desde ${new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0,
+      }).format(precio)}`
+    );
+  }
+
+  return partes.length > 0 ? partes.join(" · ") : null;
 }
 
 /** Fila de servicio de llegada: traslado o consigna. */

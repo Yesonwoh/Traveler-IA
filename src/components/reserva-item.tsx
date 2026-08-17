@@ -28,6 +28,8 @@ export type ReservaDTO = {
   proveedor: string | null;
   urlAfiliado: string | null;
   estado: string;
+  /** Línea de contexto bajo el nombre: en un vuelo, el día de salida y el precio. */
+  detalle?: string | null;
 };
 
 export function ReservaItem({ reserva, viajeId }: { reserva: ReservaDTO; viajeId: string }) {
@@ -38,6 +40,9 @@ export function ReservaItem({ reserva, viajeId }: { reserva: ReservaDTO; viajeId
     <div className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3">
       <div className="min-w-0">
         <p className="truncate font-medium text-stone-900">{reserva.nombre}</p>
+        {reserva.detalle && (
+          <p className="mt-0.5 truncate text-xs text-stone-500">{reserva.detalle}</p>
+        )}
         <div className="mt-1 flex items-center gap-2">
           {reserva.proveedor && (
             <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-semibold text-stone-500">

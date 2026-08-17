@@ -102,12 +102,12 @@ export function BuscadorVuelos({
         </div>
       </form>
 
-      {resultado && <Resultados resultado={resultado} />}
+      {resultado && <Resultados resultado={resultado} viajeId={viajeId} />}
     </div>
   );
 }
 
-function Resultados({ resultado }: { resultado: ResultadoBusqueda }) {
+function Resultados({ resultado, viajeId }: { resultado: ResultadoBusqueda; viajeId: string }) {
   if (resultado.estado === "sin-credenciales") {
     // Este caso es un fallo de configuración nuestro, no algo que el usuario pueda
     // arreglar: enseñarle los nombres de dos variables de entorno solo le dice que
@@ -147,6 +147,7 @@ function Resultados({ resultado }: { resultado: ResultadoBusqueda }) {
           <FlightCard
             key={v.id}
             vuelo={v}
+            viajeId={viajeId}
             badge={v.id === masBarato.id ? "Más barato" : undefined}
             nota={
               v.id === masBarato.id

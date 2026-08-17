@@ -1,19 +1,66 @@
 "use client";
 
-import { ExternalLink, Plane } from "lucide-react";
+import { useState, useTransition } from "react";
+import { Check, ExternalLink, Plane, TriangleAlert } from "lucide-react";
+import { guardarVuelo } from "@/actions/reservas";
 import type { VueloDTO } from "@/lib/travelpayouts/vuelos";
 
 export function FlightCard({
   vuelo,
+  viajeId,
   badge,
   nota,
 }: {
   vuelo: VueloDTO;
+  /** Viaje al que se anota la tarifa al continuar. */
+  viajeId: string;
   /** Etiqueta destacada arriba: "Más barato", "Directo"... */
   badge?: string;
   /** Frase explicativa bajo la tarjeta, al estilo "por 9€ más vuelves por la tarde". */
   nota?: string;
 }) {
+  const [estado, setEstado] = useState<"nada" | "guardado" | "fallo">("nada");
+  const [, startTransition] = useTransition();
+
+  /**
+   * Continuar hace dos cosas: abrir el buscador (que es lo que pidió el usuario y donde
+   * está la comisión) y dejar el vuelo anotado en el viaje.
+   *
+   * No se espera a que termine el guardado ni se toca el evento: el enlace tiene que
+   * abrir la pestaña dentro del mismo gesto o el navegador lo trata como un popup y lo
+   * bloquea. Como la página actual no navega —el enlace es target="_blank"—, la acción
+   * de servidor termina tranquilamente después.
+   */
+  function guardar() {
+    setEstado("guardado");
+    startTransition(async () => {
+      try {
+        await guardarVuelo({
+          viajeId,
+          vuelo: {
+            aerolineaNombre: vuelo.aerolineaNombre,
+            numeroVuelo: vuelo.numeroVuelo,
+            origenIata: vuelo.origenIata,
+            destinoIata: vuelo.destinoIata,
+            salida: vuelo.salida,
+            precio: vuelo.precio,
+            urlReserva: vuelo.urlReserva,
+          },
+        });
+      } catch {
+        // No se interrumpe a quien ya está en Aviasales con una alerta, pero tampoco se
+        // finge que ha ido bien: al volver a esta pestaña se encuentra el fallo dicho y
+        // un botón para reintentarlo. El motivo real queda en el registro del servidor.
+        setEstado("fallo");
+      }
+    });
+  }
+
+  function alContinuar() {
+    if (estado === "guardado") return;
+    guardar();
+  }
+
   return (
     <div className="flex w-[78vw] shrink-0 snap-center flex-col sm:w-72">
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
@@ -80,6 +127,7 @@ export function FlightCard({
             href={vuelo.urlReserva}
             target="_blank"
             rel="noopener noreferrer sponsored"
+            onClick={alContinuar}
             className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-brand px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-dark"
           >
             Continuar <ExternalLink size={13} />
@@ -88,7 +136,32 @@ export function FlightCard({
       </div>
 
       {/* el hueco se reserva siempre para que todas las tarjetas midan lo mismo */}
-      <p className="mt-2 min-h-8 px-1 text-xs italic leading-snug text-stone-500">{nota}</p>
+      {estado === "guardado" && (
+        <p className="mt-2 flex min-h-8 items-start gap-1.5 px-1 text-xs font-medium leading-snug text-emerald-700">
+          <Check size={13} strokeWidth={2.5} className="mt-px shrink-0" aria-hidden />
+          Guardado en tus vuelos
+        </p>
+      )}
+
+      {estado === "fallo" && (
+        <p className="mt-2 flex min-h-8 items-start gap-1.5 px-1 text-xs leading-snug text-red-700">
+          <TriangleAlert size={13} strokeWidth={2.5} className="mt-px shrink-0" aria-hidden />
+          <span>
+            No se ha guardado en el viaje.{" "}
+            <button
+              type="button"
+              onClick={guardar}
+              className="cursor-pointer font-semibold underline underline-offset-2 hover:no-underline"
+            >
+              Reintentar
+            </button>
+          </span>
+        </p>
+      )}
+
+      {estado === "nada" && (
+        <p className="mt-2 min-h-8 px-1 text-xs italic leading-snug text-stone-500">{nota}</p>
+      )}
     </div>
   );
 }
