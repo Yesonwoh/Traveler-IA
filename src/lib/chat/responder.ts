@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { hayNombreEn } from "@/lib/supabase/columnas";
 import { generarRespuestaIA, extraerCiudad, type HistorialMensaje } from "@/lib/ai/travelerAI";
-import { pruebaGratisPrompt } from "@/lib/ai/prompts";
+import { PRIMERA_IMPRESION, pruebaGratisPrompt } from "@/lib/ai/prompts";
 import { DIAS_PRUEBA, hayColumnasPrueba } from "@/lib/suscripcion/prueba";
 import { geocodeDireccion } from "@/lib/google/geocode";
 import { buscarFotoUnsplash } from "@/lib/unsplash";
@@ -112,13 +112,32 @@ export async function procesarMensajeIA({
 
   const esPrimerMensaje = historial.length === 0;
 
+  /**
+   * La primerísima respuesta de esta persona, que es donde nos compara con ChatGPT.
+   * `contador_mensajes` se incrementa al final de esta misma función, así que durante
+   * el primer mensaje de su primer viaje todavía vale 0: no hace falta contar viajes
+   * ni consultar nada más.
+   *
+   * A quien ya paga no se le toca: su prompt ya hace todo esto y más.
+   */
+  const esPrimeraImpresion = tier === "free" && (profile?.contador_mensajes ?? 0) === 0;
+
   const respuesta = await generarRespuestaIA({
     tier,
     historial,
     mensaje: texto,
     contextoUsuario: contextoDesdePerfil(profile),
-    promocion: puedeProbarGratis ? pruebaGratisPrompt(DIAS_PRUEBA) : null,
-    instrucciones,
+    // En la primera impresión no se vende nada: se está intentando demostrar que esto
+    // sirve, y meter la prueba gratuita en la misma respuesta la convierte en un
+    // anuncio. La oferta sigue ahí para el segundo mensaje en adelante.
+    promocion: puedeProbarGratis && !esPrimeraImpresion ? pruebaGratisPrompt(DIAS_PRUEBA) : null,
+    // El override va el último para que gane al briefing del formulario, que también
+    // llega por aquí y también habla del alcance de la respuesta.
+    instrucciones: esPrimeraImpresion
+      ? [instrucciones, PRIMERA_IMPRESION.prompt].filter(Boolean).join("\n\n")
+      : instrucciones,
+    modelo: esPrimeraImpresion ? PRIMERA_IMPRESION.model : undefined,
+    temperatura: esPrimeraImpresion ? PRIMERA_IMPRESION.temperature : undefined,
   });
 
   // El prompt prohíbe meter aeropuertos y vuelos en el mapa, pero el modelo se lo salta

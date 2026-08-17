@@ -166,6 +166,30 @@ export function pruebaGratisPrompt(dias: number): string {
 }
 
 /**
+ * La primera respuesta que ve alguien en su vida, sin el tope del plan gratis.
+ *
+ * El plan gratis está capado a propósito (franjas del día, 3-5 sitios, sin total) para
+ * que Pro tenga argumento. El problema es CUÁNDO se paga ese peaje: la primera respuesta
+ * es justo el momento en que la persona nos compara con ChatGPT, que le da el itinerario
+ * hora por hora sin pedirle nada. Llegar ahí con la versión recortada es perder la
+ * comparación antes de que el producto haya enseñado en qué es distinto.
+ *
+ * Así que se levanta el tope UNA vez —la primera respuesta del primer viaje, ver
+ * `esPrimeraImpresion` en lib/chat/responder.ts— y solo en lo que se nota de inmediato:
+ * horas concretas, más sitios en el mapa y el total estimado que la propia portada ya
+ * promete ("Total estimado 60€ – 71€" en components/landing/app-preview.tsx). Lo que
+ * sigue siendo de Pro no se toca: desglose por partidas, ruta optimizada con tiempos,
+ * plan B y logística fina.
+ *
+ * Como es un solo mensaje por persona, el coste del modelo bueno está acotado.
+ */
+export const PRIMERA_IMPRESION = {
+  model: "gpt-5.4",
+  temperature: 0.5,
+  prompt: `PRIMERA RESPUESTA DE ESTE USUARIO: es lo primero que ve de nosotros en su vida. Solo para ESTE mensaje, estas tres instrucciones SUSTITUYEN a las del bloque "ALCANCE DE TUS PLANES" de arriba. Donde se contradigan, mandan estas y aquellas quedan anuladas: 1. IGNORA "organiza el día por franjas" y "nunca hora por hora": aquí vas HORA POR HORA, con horas concretas ("09:00 - Bus a Sevilla...", "14:00 - Comida de menú en..."). 2. IGNORA "entre 3 y 5 sitios": aquí llenas el array 'mapa' con 6 a 8 sitios concretos. 3. IGNORA "nunca un presupuesto cerrado": aquí cierras con un TOTAL ESTIMADO del viaje en rango ("Total estimado: 60€ - 71€"), en su propia línea al final. El resto del bloque sigue vigente. Y lo que NO se levanta, que sigue siendo exclusivo de Pro y aquí no se hace: desglose del presupuesto por partidas, ruta optimizada con tiempos entre paradas, plan B más barato y logística fina (días de cierre, mejores franjas para evitar colas). En esta respuesta NO nombres Traveler IA Pro ni ninguna prueba gratuita bajo ningún concepto: quien acaba de llegar viene a ver si esto le sirve, no a que le vendan. El tono no cambia: sigues siendo el colega de siempre, no una agencia.`,
+} as const;
+
+/**
  * Instrucciones para el primer turno cuando el viaje nace del formulario guiado:
  * la IA ya tiene los datos, así que no debe volver a preguntarlos.
  */

@@ -54,11 +54,19 @@ export async function generarRespuestaIA(params: {
   instrucciones?: string | null;
   /** Nota comercial de este turno (p. ej. que tiene la prueba gratuita sin estrenar). */
   promocion?: string | null;
+  /**
+   * Modelo y temperatura solo para este turno. El prompt base sigue siendo el del plan,
+   * que es lo que mantiene la voz: esto cambia con qué se responde, no quién responde.
+   * Hoy lo usa la primera impresión (ver PRIMERA_IMPRESION en ./prompts).
+   */
+  modelo?: string;
+  temperatura?: number;
 }): Promise<RespuestaIA> {
   const isPremium = params.tier === "premium";
-  const model = isPremium ? PREMIUM_MODEL : FREE_MODEL;
+  const model = params.modelo ?? (isPremium ? PREMIUM_MODEL : FREE_MODEL);
   const systemPrompt = isPremium ? PREMIUM_SYSTEM_PROMPT : FREE_SYSTEM_PROMPT;
-  const temperature = isPremium ? PREMIUM_TEMPERATURE : FREE_TEMPERATURE;
+  const temperature =
+    params.temperatura ?? (isPremium ? PREMIUM_TEMPERATURE : FREE_TEMPERATURE);
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
