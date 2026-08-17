@@ -62,6 +62,98 @@ body {
   animation: precio-entra 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* --- Vista previa de la portada ------------------------------------------
+   El momento animado de la landing. No decora la sección: reproduce una vez lo
+   que hace el producto — escribes, la IA contesta, el itinerario se dibuja de
+   arriba abajo y cada parada aterriza como pin en el mapa. El truco cierra.
+   Los tiempos de cada pieza viven en components/landing/app-preview.tsx y
+   llegan aquí en la variable --d.
+
+   Todo el bloque está condicionado: sin JavaScript o con menos movimiento
+   pedido, el HTML servido ya es el estado final y aquí no se toca nada. El
+   estado de espera lo pone el propio guion (ver escena-animada.tsx), así que
+   una hidratación fallida deja la escena visible, nunca en blanco. */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-escena="espera"] .vp-sube,
+  [data-escena="espera"] .vp-pin,
+  [data-escena="espera"] .vp-truco {
+    opacity: 0;
+  }
+  [data-escena="espera"] .vp-carril {
+    transform: scaleY(0);
+  }
+  [data-escena="espera"] .vp-punto {
+    transform: scale(0);
+  }
+
+  [data-escena="anima"] .vp-sube {
+    animation: vp-sube 440ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+  }
+  /* El carril corre por delante de los puntos: la línea baja y las paradas se
+     van encendiendo a su paso, no al revés. */
+  [data-escena="anima"] .vp-carril {
+    animation: vp-carril 520ms cubic-bezier(0.33, 1, 0.68, 1) var(--d, 0ms) both;
+  }
+  [data-escena="anima"] .vp-punto {
+    animation: vp-punto 320ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+  }
+  [data-escena="anima"] .vp-pin {
+    animation: vp-pin 460ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+  }
+  [data-escena="anima"] .vp-truco {
+    animation: vp-truco 560ms cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+  }
+}
+
+@keyframes vp-sube {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes vp-carril {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes vp-punto {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+/* El pin cae sobre su sitio; el elemento de fuera conserva el translate que lo
+   coloca en el mapa, por eso esto anima una capa interior. */
+@keyframes vp-pin {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes vp-truco {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Los controles nativos de fecha y número rompían el sistema visual en seco: el
    selector gris del navegador y las flechitas de incremento no se parecen a nada
    más de la interfaz. Se quedan funcionando igual, pero con nuestro lenguaje. */
