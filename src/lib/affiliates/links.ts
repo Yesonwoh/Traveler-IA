@@ -65,8 +65,27 @@ const PROGRAMAS: Record<ProgramaTercero, Programa> = {
     tracking: process.env.TP_TIQETS_TRACKING,
     enlaceCorto: process.env.TP_TIQETS_LINK,
   },
+  /**
+   * Klook va por el redirector y NO pegando parámetros a la URL de búsqueda, por dos
+   * motivos comprobados:
+   *
+   * 1. Atribución. Con los parámetros pegados a mano la URL final no lleva
+   *    `aff_klick_id`; pasando por el enlace corto sí, y además distinto en cada clic.
+   *    Ese id es el que identifica la visita, así que los enlaces de antes podían no
+   *    estar contando nada.
+   * 2. Klook está detrás de DataDome (`x-datadome: protected`). Aterrizar directamente
+   *    en una URL de resultados de búsqueda con parámetros de afiliado pegados es el
+   *    patrón que su antibot vigila; `affiliate.klook.com/redirect`, al que lleva el
+   *    enlace corto, es su propia puerta de entrada para este tráfico.
+   *
+   * El enlace corto del panel acepta `?u=` con el destino codificado. Si algún día otro
+   * programa da problemas parecidos, el mecanismo es el mismo.
+   */
   klook: {
     busqueda: ({ lugar }) => `https://www.klook.com/es/search/?query=${lugar}`,
+    redirect: process.env.TP_KLOOK_LINK ? `${process.env.TP_KLOOK_LINK}?u={url}` : undefined,
+    // se conserva como red de seguridad: si un día falta el enlace corto, el enlace
+    // sigue saliendo con la atribución vieja en vez de quedarse sin nada
     tracking: process.env.TP_KLOOK_TRACKING,
     enlaceCorto: process.env.TP_KLOOK_LINK,
   },

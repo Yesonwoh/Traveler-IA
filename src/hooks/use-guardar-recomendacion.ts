@@ -29,6 +29,21 @@ export function useGuardarRecomendacion(recomendacion: RecomendacionDTO, viajeId
     guardados?.marcar(recomendacion.id);
   }
 
+  /**
+   * Los enlaces de afiliado se abren con `noopener` pero SIN `noreferrer`.
+   *
+   * `noopener` es el que protege: impide que la pestaña nueva toque `window.opener`.
+   * `noreferrer` no añade seguridad, solo borra la cabecera `Referer` — y eso es
+   * justo lo que no queremos aquí. Un programa de afiliados necesita saber de dónde
+   * viene la visita, y una navegación entre sitios con parámetros de afiliado y sin
+   * ningún origen es firma de robot: Klook (que va con DataDome) responde a eso con
+   * "acceso restringido temporalmente" al primer clic.
+   *
+   * No se escapa nada por el camino: la `Referrer-Policy` del sitio es
+   * `strict-origin-when-cross-origin` (ver next.config.ts), así que el proveedor
+   * recibe "https://traveleria.app/" y nunca la URL del viaje.
+   */
+
   /** Crea la reserva (con su enlace de afiliado) y devuelve la URL, sin abrir nada. */
   async function anotarReserva() {
     const { urlAfiliado } = await guardarReserva({
@@ -44,7 +59,7 @@ export function useGuardarRecomendacion(recomendacion: RecomendacionDTO, viajeId
 
   async function abrirAfiliado() {
     const urlAfiliado = await anotarReserva();
-    if (urlAfiliado) window.open(urlAfiliado, "_blank", "noopener,noreferrer");
+    if (urlAfiliado) window.open(urlAfiliado, "_blank", "noopener");
   }
 
   async function anotarFavorito() {
@@ -76,7 +91,7 @@ export function useGuardarRecomendacion(recomendacion: RecomendacionDTO, viajeId
         // el window.open y algunos navegadores lo tratarían como un popup y lo
         // bloquearían, que en esta tarjeta es justo donde está la comisión.
         const [, urlAfiliado] = await Promise.all([anotarFavorito(), anotarReserva()]);
-        if (urlAfiliado) window.open(urlAfiliado, "_blank", "noopener,noreferrer");
+        if (urlAfiliado) window.open(urlAfiliado, "_blank", "noopener");
       } else if (tieneEntradas) {
         // El botón dice "Guardar", así que no se le abre una pestaña sin avisar: la
         // entrada queda anotada en Reservas y se compra desde allí o desde "Entradas".

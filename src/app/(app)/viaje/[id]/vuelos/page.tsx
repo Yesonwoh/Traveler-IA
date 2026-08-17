@@ -169,7 +169,7 @@ function ServicioLlegada({
     <a
       href={href}
       target="_blank"
-      rel="noopener noreferrer sponsored"
+      rel="noopener sponsored"
       className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-4 transition-colors hover:border-brand hover:bg-brand-light/40"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand">

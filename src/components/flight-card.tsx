@@ -123,10 +123,11 @@ export function FlightCard({
               desde {formatearPrecio(vuelo.precio, vuelo.moneda)}
             </p>
           </div>
+          {/* `rel` sin `noreferrer` a propósito: ver use-guardar-recomendacion.ts */}
           <a
             href={vuelo.urlReserva}
             target="_blank"
-            rel="noopener noreferrer sponsored"
+            rel="noopener sponsored"
             onClick={alContinuar}
             className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-brand px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-dark"
           >

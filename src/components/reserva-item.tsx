@@ -67,7 +67,7 @@ export function ReservaItem({ reserva, viajeId }: { reserva: ReservaDTO; viajeId
           <a
             href={reserva.urlAfiliado}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener sponsored"
             className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 hover:text-brand"
             aria-label="Abrir enlace de reserva"
           >
