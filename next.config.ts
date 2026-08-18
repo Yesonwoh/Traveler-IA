@@ -76,7 +76,14 @@ const csp = [
   // `upgrade-insecure-requests` NO existe en una política de solo aviso: el navegador
   // la descarta y escribe un error por cada carga de página, que acaba tapando las
   // violaciones de verdad. Entra solo cuando la política bloquea.
-  ...(CSP_SOLO_AVISAR ? [] : ["upgrade-insecure-requests"]),
+  //
+  // Fuera también en desarrollo. El servidor local va por HTTP a propósito, y esta
+  // directiva obliga al navegador a pedirlo todo por HTTPS. Desde este ordenador no se
+  // nota, porque `localhost` es origen seguro y queda exento; pero al abrir la app
+  // desde el móvil por la IP de la red local, el CSS y el JavaScript se piden a un
+  // HTTPS que no existe y la página sale en crudo. Probar en un móvil de verdad es
+  // justo para lo que sirve el servidor de desarrollo.
+  ...(CSP_SOLO_AVISAR || esDesarrollo ? [] : ["upgrade-insecure-requests"]),
 ]
   .join("; ")
   .replace(/\s{2,}/g, " ");
