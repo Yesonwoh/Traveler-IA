@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
-import { PinDetailCard } from "@/components/pin-detail-card";
 import { cn } from "@/lib/utils";
-import type { RecomendacionDTO } from "@/actions/chat";
 
+/**
+ * El cajón que sube desde abajo del mapa con el detalle del punto tocado. Es solo el
+ * envoltorio (posición, entrada animada y botón de cerrar): la tarjeta de dentro la pone
+ * quien lo usa, porque el mapa del chat y el de favoritos enseñan cosas distintas —
+ * el de favoritos tiene sitios guardados a mano, sin recomendación detrás.
+ */
 export function MapPinPanel({
-  recomendacion,
-  viajeId,
+  children,
   onClose,
 }: {
-  recomendacion: RecomendacionDTO;
-  viajeId: string;
+  children: ReactNode;
   onClose: () => void;
 }) {
   const [visible, setVisible] = useState(false);
@@ -30,12 +32,7 @@ export function MapPinPanel({
       )}
     >
       <div className="relative">
-        <PinDetailCard
-          recomendacion={recomendacion}
-          viajeId={viajeId}
-          className="shadow-2xl"
-          photoClassName="h-52"
-        />
+        {children}
         <button
           onClick={onClose}
           aria-label="Cerrar"

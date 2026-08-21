@@ -299,11 +299,14 @@ export function ChatView({
               onPuntoClick={(p) => setPuntoSeleccionadoId(p.id)}
             />
             {puntoSeleccionado && (
-              <MapPinPanel
-                recomendacion={puntoSeleccionado}
-                viajeId={viajeId}
-                onClose={() => setPuntoSeleccionadoId(null)}
-              />
+              <MapPinPanel onClose={() => setPuntoSeleccionadoId(null)}>
+                <PinDetailCard
+                  recomendacion={puntoSeleccionado}
+                  viajeId={viajeId}
+                  className="shadow-2xl"
+                  photoClassName="h-52"
+                />
+              </MapPinPanel>
             )}
           </div>
         </MapSheet>
